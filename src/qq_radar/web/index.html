@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QQ 信息雷达 · 原文阅读</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span><div>信息雷达<small>QQ RADAR</small></div></div>
+    <div class="workspace-label">工作空间</div>
+    <nav aria-label="页面导航"><button id="reading-tab" class="nav-item active" type="button" aria-current="page"><span aria-hidden="true">▤</span> 原文阅读</button><button id="imports-tab" class="nav-item" type="button"><span aria-hidden="true">↳</span> 导入记录</button></nav>
+    <div class="sidebar-note"><span class="status-dot"></span> 本机合成演示<p>这里的内容均为合成数据。<br>尚未连接 QQ 或 AI。</p></div>
+    <div class="sidebar-footer">先看内容，再回到来源。<br><span>阅读体验 · 第一个增量</span></div>
+  </aside>
+  <main>
+    <header class="page-header"><div><div class="eyebrow">SOURCE READER</div><h1 id="page-title">原文阅读</h1><p id="page-description">保留消息的来处，也保留讨论的脉络。</p></div><span class="demo-badge">合成数据 · 只读</span></header>
+    <div id="global-error" class="error-banner" role="alert" hidden></div>
+    <section id="reading-view" aria-labelledby="page-title">
+      <form id="filters" class="filters">
+        <label>账号<select id="account" aria-label="账号"></select></label>
+        <label>群<select id="group" aria-label="群"></select></label>
+        <label class="search-label">关键词<div class="search-control"><input id="keyword" type="search" maxlength="200" placeholder="搜索原文或转发内容"><button type="submit" class="primary">搜索</button></div></label>
+      </form>
+      <div class="reader-grid">
+        <section class="message-panel" aria-label="消息列表"><div class="panel-heading"><h2>群消息</h2><span id="message-count"></span></div><p class="list-hint">按消息时间排列 · 点击查看完整来源</p><div id="message-list" aria-live="polite"></div><div class="pagination"><button id="previous" type="button" class="secondary" disabled>上一页</button><span id="page-number">第 1 页</span><button id="next" type="button" class="secondary" disabled>下一页</button></div></section>
+        <section class="detail-panel" aria-label="原文详情"><div class="panel-heading"><h2>来源与上下文</h2><span class="small-tag">应用内定位</span></div><div id="detail" aria-live="polite"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">↗</span><h3>从一条消息开始</h3><p>选择左侧消息，查看原文、转发层级和前后讨论。</p></div></div></section>
+      </div>
+      <p class="boundary-note">图片尚未获取，未知消息格式会保留并标注。合成历史内容供回看；实际到期清理与 QQ 客户端跳转尚未实现。</p>
+    </section>
+    <section id="imports-view" hidden><div class="imports-intro"><h2>每一行，都有处理结果</h2><p>导入完成表示文件已处理，不代表 QQ 消息采集完整。错误报告只显示行号和原因。</p></div><div id="import-list" aria-live="polite"></div></section>
+  </main>
+</body>
+</html>

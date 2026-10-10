@@ -14,7 +14,7 @@ def main(argv=None):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="QQ-Bot 合成数据离线工具（不接入 QQ / AI）")
-    parser.add_argument("--db", default="data/radar.db")
+    parser.add_argument("--db")
     commands = parser.add_subparsers(dest="command", required=True)
     ingest = commands.add_parser("import", help="导入 synthetic.v1 JSONL")
     ingest.add_argument("file")
@@ -35,9 +35,22 @@ def main(argv=None):
     around = commands.add_parser("context")
     around.add_argument("id")
     around.add_argument("--radius", type=int, default=10)
+    for name, help_text in (("demo", "准备合成样本并打开本机来源阅读服务"), ("serve", "只读浏览已有合成数据库")):
+        web = commands.add_parser(name, help=help_text)
+        web.add_argument("--port", type=int, default=8765)
     args = parser.parse_args(argv)
     db = None
     try:
+        db_path = args.db or ("data/source-demo.db" if args.command == "demo" else "data/radar.db")
+        if args.command in ("demo", "serve"):
+            from .demo import prepare_demo
+            from .server import serve
+            if not 1 <= args.port <= 65535:
+                raise ValueError("INVALID_PORT")
+            if args.command == "demo":
+                prepare_demo(db_path)
+            serve(db_path, args.port)
+            return 0
         if args.command == "import":
             config = json.loads(Path(args.allow).read_text(encoding="utf-8"))
             if not isinstance(config, list) or not config:
@@ -47,7 +60,7 @@ def main(argv=None):
                 if not isinstance(item, dict) or any(not isinstance(item.get(k), str) or not item[k].strip() for k in ("account_id", "group_id")):
                     raise ValueError("INVALID_ALLOWLIST")
                 allowed.add((item["account_id"], item["group_id"]))
-        db = connect(args.db, readonly=args.command != "import")
+        db = connect(db_path, readonly=args.command != "import")
         if args.command == "import":
             result = import_file(db, args.file, allowed)
         elif args.command == "report":

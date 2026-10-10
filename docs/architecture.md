@@ -2,6 +2,8 @@
 
 2026-10-10，TASK-003 / TASK-004。总体架构仍为提议；M0 离线 CLI 已按 DEC-015 授权实现，实际选型见 DEC-016。src/qq_radar/domain.py、storage.py、ingestion.py、cli.py 分别负责规范化、存储查询、事务导入和命令；后续服务模块尚未实现。组件证据见 [component_review.md](component_review.md)。
 
+TASK-013 增量：demo.py 生成明确标注的合成阅读样本，server.py 提供本机只读接口，web/ 下原生页面展示来源与导入状态；复用现有 storage 查询，无 schema 升级。http.server 只用于本机体验（DEC-018），后续生产 API / worker / 外部组件方案仍为提议。
+
 ```mermaid
 flowchart TD
     QQ[授权 QQ 群] --> Adapter[QQ 接入适配器]
@@ -66,4 +68,4 @@ Windows 本地开发完成后再测云端单机。约 30,000 / 天折合均值�
 
 ## 选型状态
 
-Python 标准库 + SQLite 已用于 M0，实测版本与许可见 DEC-016；FastAPI 推荐用于后续 API；NapCat / QCE 推荐先验证。真实组件许可适用范围与 QQ 兼容矩阵未完成，不能将此草案当作安装配置。无网络服务；离线合成回放性能记录仅见 task004_validation.md，不代表生产容量。
+Python 标准库 + SQLite 已用于 M0，实测版本与许可见 DEC-016；TASK-013 本机体验服务见 DEC-018；FastAPI 推荐用于后续生产 API；NapCat / QCE 推荐先验证。真实组件许可适用范围与 QQ 兼容矩阵未完成，不能将此草案当作安装配置。离线合成回放性能记录仅见 task004_validation.md，不代表生产容量。

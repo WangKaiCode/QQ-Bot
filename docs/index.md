@@ -1,6 +1,6 @@
 # 项目文档入口
 
-更新日期：2026-10-10。当前阶段：TASK-004 离线合成数据闭环已实现，待甲方验收；本地 Git 管理，未上传。
+更新日期：2026-10-10。当前阶段：TASK-004 离线闭环与 TASK-013 本机来源阅读已实现，待甲方验收；本地 Git 管理，未上传。
 
 | 文档 | 用途 | 维护方式 |
 | --- | --- | --- |
@@ -21,6 +21,8 @@
 | [product_analysis.md](product_analysis.md) | 使用场景、产品流程与体验评审 | 乙方依据用户反馈维护 |
 | [offline_usage.md](offline_usage.md) | TASK-004 实际命令、配置、报告与恢复步骤 | 随实现维护 |
 | [task004_validation.md](task004_validation.md) | TASK-004 测试覆盖与合成回放基线 | 保留实测范围与结果 |
+| [web_usage.md](web_usage.md) | 本机来源阅读界面启动与体验路径 | 随 TASK-013 实现及反馈维护 |
+| [task013_validation.md](task013_validation.md) | 本机网页测试与实际浏览器验证 | 保留实测范围与结果 |
 
 项目根目录的 [AGENTS.md](../AGENTS.md) 是后续 Codex 的开发入口规则。已有 [README.md](../README.md) 保留第一阶段说明；最新开发状态以本入口和 status.md 为准。
 

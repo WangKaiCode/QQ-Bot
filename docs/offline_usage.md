@@ -45,4 +45,6 @@ python tests/benchmark_offline.py
 
 验证记录见 [task004_validation.md](task004_validation.md)。数据库及演示数据位于被 Git 忽略的 data/；合成 fixture 才进入版本库。工具只有本机离线能力，不是 QCE / OneBot 适配器，不提供网页、QQ / AI 接入、媒体下载或客户端跳转。单行上限 1 MiB（含换行）、转发递归层级 16、规范化段 / 节点约 10,000；超限报错，不静默截断。未知段保留原文并标记 unsupported。
 
+后续 TASK-013 已新增本机来源网页，启动 `python qq_bot.py demo`，或用 serve 只读浏览已有合成库；见 [web_usage.md](web_usage.md)。上段“不提供网页”为 TASK-004 首次交付边界，真实 QQ / AI、媒体及跳转仍未实现。
+
 原文 expires_at 按消息时间加 3 天记录，但到期清理和查询过期状态尚未实现（TASK-008）；历史合成样本仍可查看。当前不得用于真实数据留存。用户导入文件只读，不由应用删除。摘要保留 10 天将在摘要与清理任务实现；收藏例外仍未决定。

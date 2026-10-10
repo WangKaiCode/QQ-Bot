@@ -1,6 +1,6 @@
 # 接口与输入契约草案 v0.1
 
-2026-10-10，TASK-003 / TASK-004。M0 synthetic.v1 离线 CLI 已实现，命令及报告见 [运行说明](offline_usage.md)；M1 网络接口仍为草案，未开放服务。本文件定义自研应用契约；不是 NapCat / QCE 官方接口规范。
+2026-10-10，TASK-003 / TASK-004 / TASK-013。离线 CLI 已实现，见 [运行说明](offline_usage.md)；本机只读来源查询子集已通过 TASK-013 提供，下述其他 M1 接口仍为草案。本文件定义自研应用契约；不是 NapCat / QCE 官方接口规范。
 
 ## M0 合成输入
 
@@ -17,6 +17,14 @@ UTF-8 JSONL，每行一个对象；`schema_version` 为 `synthetic.v1`，account
 实际 CLI 操作：import、batches、report、query、show、context，入口 qq_bot.py。query 必须指定账号与群，时间范围为 [since, until)，关键词按字面子串；limit / offset 分页。输入限制与退出码见 offline_usage.md。link 段需字符串 url，image 需字符串 resource_ref；forward 节点的可选 sender_id / sender_name 为非空字符串，可选 timestamp 同顶层时间约束。未知字段保留在原文；转发节点元数据与段路径分别保存。文件不读取媒体或链接内容。
 
 ## M1 应用接口
+
+### TASK-013 已实现的本机子集
+
+固定绑定 127.0.0.1，只读 synthetic.v1 数据库，无生产认证能力。GET /api/v1/health 返回 mode=synthetic、readonly=true、retention_active=false；GET /api/v1/conversations 返回账号 / 群与消息数；GET /api/v1/messages 要求 account、group，支持 keyword、since、until、limit（默认 20，1–100）、offset（非负），返回 items / next_offset。此增量采用 offset 分页，未来生产游标仍为提议。
+
+GET /api/v1/messages/{id} 返回实际来源与规范化段；GET /api/v1/messages/{id}/context 的 radius 默认 2、范围 0–50；GET /api/v1/imports 列最近 50 批，GET /api/v1/imports/{id} 返回计数与错误行，无失败原文。参数验证 400、未知对象 / 路径 404、POST 405、存储异常 503，错误 JSON 含 code、request_id；错误页不回显路径或原文。Host / Origin 不属于本机服务或明确 cross-site 请求拒绝 403，不提供 CORS。
+
+页面仅使用上述接口，消息 / 段 / 来源字段以 textContent 渲染。原文查询当前未执行到期判断，retention_active=false；不要将历史 available 状态解释为生产保留契约已完成。下表完整 M1 路线中未说明为已实现的接口仍为提案。
 
 | 方法与路径 | 作用 | 主要约束 |
 | --- | --- | --- |
