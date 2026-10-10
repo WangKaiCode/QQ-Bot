@@ -1,6 +1,6 @@
 # 接口与输入契约草案 v0.1
 
-2026-10-10，TASK-003。未实现、未开放任何服务。本文件定义自研应用契约；不是 NapCat / QCE 官方接口规范。
+2026-10-10，TASK-003 / TASK-004。M0 synthetic.v1 离线 CLI 已实现，命令及报告见 [运行说明](offline_usage.md)；M1 网络接口仍为草案，未开放服务。本文件定义自研应用契约；不是 NapCat / QCE 官方接口规范。
 
 ## M0 合成输入
 
@@ -14,7 +14,7 @@ UTF-8 JSONL，每行一个对象；`schema_version` 为 `synthetic.v1`，account
 
 输入不冒充 QCE 格式。取得实际脱敏样本并检查版本后新增独立适配契约；不同来源通过 adapter 转换为 domain 对象，禁止把 JSON 字段相似当作已兼容。
 
-拟定 CLI 操作：导入指定文件与白名单、读取批次报告、按本地消息 ID 查看原文及上下文、按关键词 / 群 / 时间查询、回放合成样本。最终命令以实现后的运行文档为准。
+实际 CLI 操作：import、batches、report、query、show、context，入口 qq_bot.py。query 必须指定账号与群，时间范围为 [since, until)，关键词按字面子串；limit / offset 分页。输入限制与退出码见 offline_usage.md。link 段需字符串 url，image 需字符串 resource_ref；forward 节点的可选 sender_id / sender_name 为非空字符串，可选 timestamp 同顶层时间约束。未知字段保留在原文；转发节点元数据与段路径分别保存。文件不读取媒体或链接内容。
 
 ## M1 应用接口
 

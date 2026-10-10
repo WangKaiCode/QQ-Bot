@@ -2,6 +2,8 @@
 
 当前没有可执行测试。第一阶段仅创建项目文档与基础目录。
 
+2026-10-10 更新：上述为第一阶段历史；TASK-004 新增 test_offline.py（10 项自动化测试）、fixtures/ 合成输入与 benchmark_offline.py（种子 410 的 30,000 条回放）。执行 `python -m unittest discover -s tests -v` 和 `python tests/benchmark_offline.py`，证据见 [task004_validation.md](../docs/task004_validation.md)。测试不接入真实服务。
+
 下一阶段重点验证：
 
 - 重复导入、跨账号 ID 冲突与乱序处理。

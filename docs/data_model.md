@@ -1,6 +1,14 @@
 # 最小数据模型草案 v0.1
 
-2026-10-10，TASK-003。状态：设计提案，尚无数据库或迁移文件。M0 实现前锁定最小字段；之后迁移保留 schema 版本与可复现升级步骤。
+2026-10-10，TASK-003 / TASK-004。下表保留完整设计提案；TASK-004 已实现下述最小 schema，后续实体仍未实现。数据库使用 PRAGMA user_version=1，仅初始化新空库；拒绝未知版本与已有非本应用表的未版本化库，当前无历史版本升级迁移。
+
+## TASK-004 实际 schema v1
+
+实现定义见 src/qq_radar/storage.py。messages 直接保存 account_id、group_id、namespace 固定 synthetic.v1、external_id，并以这四项唯一；不依赖内容哈希合并身份。原始行 raw_json（去行末换行）、canonical JSON SHA-256、发送者快照、原始时间、UTC 毫秒、首次接收时间、expires_at（消息时间 + 3 天）及 available 状态保存于 messages。canonical 哈希忽略对象键顺序 / 空白，但任何字段值变化均报身份冲突，不自动覆盖旧文。
+
+message_segments 通过消息外键及唯一 path 保存段 / forward_node、父路径、状态和元数据；text 聚合字段仅用于查询，不替代原文。import_batches 保存源版本、文件哈希、状态和已提交行；observations 以批次 / 行号唯一保存终态、错误码、消息关联及合法白名单观测的原始行和哈希。无效行仅保存错误元数据；excluded 不保存正文或哈希。报告计数从已提交 observations 聚合。一个事务块内消息、段、观测和进度同时提交。
+
+此离线最小实现没有独立 accounts、conversations、message_keys、observation_messages、附件表或 ambiguous 身份匹配。显式账号 / 群限定实现隔离；真实 adapter 上线前重新设计 namespace / epoch 与迁移，不能将 synthetic 身份保证扩展到 QQ。未自动清理到期正文；详情当前仍返回 available，真实保留及 expired 查询状态归 TASK-008。
 
 ## 基本约定
 
@@ -47,4 +55,4 @@ M0 的去重保证限于已定义的合成输入身份和同文件重导；不�
 
 raw_json、转发文本、OCR、副本、导入文件、附件与索引都应纳入数据清单和清理策略；用户原始导出文件只读，应用不得自行删除。应用托管副本与备份需有独立期限，不能靠 SQLite 行删除保证所有副本已经清除。
 
-具体正文、摘要和收藏保留期限参见 mvp_proposal.md 的建议，仍待甲方确认。
+具体正文 3 天、摘要 10 天已由 DEC-012 确认；收藏例外及媒体副本规则仍待甲方确认。

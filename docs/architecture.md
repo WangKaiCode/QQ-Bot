@@ -1,6 +1,6 @@
 # 技术架构草案 v0.1
 
-2026-10-10，TASK-003。状态：提议，未实现；需甲方确认主要路线后开始编程。组件证据见 [component_review.md](component_review.md)。
+2026-10-10，TASK-003 / TASK-004。总体架构仍为提议；M0 离线 CLI 已按 DEC-015 授权实现，实际选型见 DEC-016。src/qq_radar/domain.py、storage.py、ingestion.py、cli.py 分别负责规范化、存储查询、事务导入和命令；后续服务模块尚未实现。组件证据见 [component_review.md](component_review.md)。
 
 ```mermaid
 flowchart TD
@@ -66,4 +66,4 @@ Windows 本地开发完成后再测云端单机。约 30,000 / 天折合均值�
 
 ## 选型状态
 
-Python + SQLite 推荐用于 M0；FastAPI 推荐用于后续 API；NapCat / QCE 推荐先验证。版本锁定、真实运行许可适用范围与 QQ 兼容矩阵未完成，不能将此草案当作安装配置。不存在已运行的服务或已完成的性能结论。
+Python 标准库 + SQLite 已用于 M0，实测版本与许可见 DEC-016；FastAPI 推荐用于后续 API；NapCat / QCE 推荐先验证。真实组件许可适用范围与 QQ 兼容矩阵未完成，不能将此草案当作安装配置。无网络服务；离线合成回放性能记录仅见 task004_validation.md，不代表生产容量。
