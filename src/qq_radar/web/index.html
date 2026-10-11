@@ -11,7 +11,7 @@
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span><div>信息雷达<small>QQ RADAR</small></div></div>
     <div class="workspace-label">工作空间</div>
-    <nav aria-label="页面导航"><button id="reading-tab" class="nav-item active" type="button" aria-current="page"><span aria-hidden="true">▤</span> 原文阅读</button><button id="digest-tab" class="nav-item" type="button"><span aria-hidden="true">≋</span> 摘要预览</button><button id="imports-tab" class="nav-item" type="button"><span aria-hidden="true">↳</span> 导入记录</button><button id="retention-tab" class="nav-item" type="button"><span aria-hidden="true">◷</span> 保留预览</button></nav>
+    <nav aria-label="页面导航"><button id="feed-tab" class="nav-item" type="button"><span aria-hidden="true">▥</span> 信息流</button><button id="reading-tab" class="nav-item active" type="button" aria-current="page"><span aria-hidden="true">▤</span> 原文阅读</button><button id="digest-tab" class="nav-item" type="button"><span aria-hidden="true">≋</span> 摘要预览</button><button id="imports-tab" class="nav-item" type="button"><span aria-hidden="true">↳</span> 导入记录</button><button id="retention-tab" class="nav-item" type="button"><span aria-hidden="true">◷</span> 保留预览</button></nav>
     <div class="sidebar-note"><span class="status-dot"></span> 本机合成演示<p>这里的内容均为合成数据。<br>尚未连接 QQ 或 AI。</p></div>
     <div class="sidebar-footer">先看内容，再回到来源。<br><span>阅读体验 · 第一个增量</span></div>
   </aside>
@@ -23,11 +23,17 @@
         <label>群<select id="group" aria-label="群"></select></label>
         <label class="search-label">关键词<div class="search-control"><input id="keyword" type="search" maxlength="200" placeholder="搜索原文或转发内容"><button type="submit" class="primary">搜索</button></div></label>
       </form>
+    <section id="feed-view" hidden aria-labelledby="page-title">
+      <p class="boundary-note">本地 Mock 作业信息流 · 每个窗口显示最新成功版本，未调用 AI、未启动后台定时任务。作业库保存来源引用，不复制摘录正文；有效来源到期后停止显示摘录，卡片在窗口结束 10 天后标记到期。</p>
+      <div id="feed-list" aria-live="polite"></div>
+      <div class="pagination"><button id="feed-previous" type="button" class="secondary" disabled>上一页摘要</button><span id="feed-page"></span><button id="feed-next" type="button" class="secondary" disabled>下一页摘要</button></div>
+      <div class="digest-card"><h2>作业状态</h2><p class="boundary-note">生成失败、重试和新输入版本在这里查看；网页只读，不触发作业。</p><button id="jobs-refresh" type="button" class="secondary">查看当前群作业</button><div id="jobs-list" aria-live="polite"></div></div>
+    </section>
     <section id="retention-view" hidden aria-labelledby="page-title">
       <form id="retention-settings" class="filters">
         <label class="search-label">检查时间（含时区；留空为当前时间）<div class="search-control"><input id="retention-as-of" aria-label="检查时间" placeholder="2026-10-15T12:00:00+08:00" maxlength="40"><button type="submit" class="primary">检查保留范围</button></div></label>
       </form>
-      <p class="boundary-note">原文保留 3 天、摘要保留 10 天。这里只预览范围，不删除、不改变原文状态。当前尚无持久摘要；下载文件、备份和用户导入文件的清理不在此次预览中。</p>
+      <p class="boundary-note">原文保留 3 天、摘要保留 10 天。这里只预览范围，不删除、不改变原文状态。摘要作业仅保存引用，不保存摘录副本；下载文件、备份和用户导入文件的清理不在此次预览中。</p>
       <div id="retention-coverage" class="coverage" aria-live="polite"></div>
       <div id="retention-list" aria-live="polite"></div>
       <div class="pagination"><button id="retention-previous" type="button" class="secondary" disabled>上一页到期记录</button><span id="retention-page"></span><button id="retention-next" type="button" class="secondary" disabled>下一页到期记录</button></div>

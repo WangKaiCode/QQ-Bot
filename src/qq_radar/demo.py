@@ -47,3 +47,30 @@ def prepare_demo(db_path):
                                        ("demo-second-account", "demo-tech")})
     finally:
         db.close()
+
+
+def prepare_jobs(db_path, jobs_path=None, as_of=None):
+    """Seed closed synthetic windows once; no background timer or AI calls."""
+    from . import jobs
+    from .analysis import load_rules, window_start
+    path = Path(db_path).resolve()
+    target = Path(jobs_path).resolve() if jobs_path is not None else path.with_suffix(".jobs.db")
+    if target == path or (target.exists() and target.samefile(path)):
+        raise ValueError("SOURCE_JOBS_PATH_COLLISION")
+    clock = jobs._now(as_of)
+    source = connect(path, readonly=True)
+    queued = None
+    try:
+        queued = jobs.connect(target)
+        scopes = source.execute("SELECT DISTINCT account_id,group_id FROM messages ORDER BY account_id,group_id").fetchall()
+        for kind, duration, count in (("hourly", 3600000, 72), ("daily", 86400000, 3)):
+            end = window_start(clock, kind)
+            for scope in scopes:
+                for topic in load_rules()["topics"]:
+                    jobs.enqueue(queued, source, scope["account_id"], scope["group_id"], topic, kind,
+                                 end - count * duration, end, clock)
+        return jobs.run(queued, source, clock)
+    finally:
+        source.close()
+        if queued is not None:
+            queued.close()

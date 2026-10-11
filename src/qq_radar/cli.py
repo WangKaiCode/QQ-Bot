@@ -15,6 +15,7 @@ def main(argv=None):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="QQ-Bot 合成数据离线工具（不接入 QQ / AI）")
     parser.add_argument("--db")
+    parser.add_argument("--jobs-db", help="独立作业库；默认原文库旁的 .jobs.db")
     commands = parser.add_subparsers(dest="command", required=True)
     ingest = commands.add_parser("import", help="导入 synthetic.v1 JSONL")
     ingest.add_argument("file")
@@ -56,21 +57,42 @@ def main(argv=None):
     retention.add_argument("--as-of", help="带时区的检查时间；默认当前时间")
     retention.add_argument("--limit", type=int, default=20)
     retention.add_argument("--offset", type=int, default=0)
+    queued = commands.add_parser("jobs-enqueue", help="为已关闭完整窗口建立离线 Mock 作业")
+    queued.add_argument("--account", required=True)
+    queued.add_argument("--group", required=True)
+    queued.add_argument("--rules")
+    queued.add_argument("--topic", default="ai")
+    queued.add_argument("--kind", choices=("hourly", "daily"), default="hourly")
+    queued.add_argument("--since", required=True)
+    queued.add_argument("--until", required=True)
+    queued.add_argument("--as-of")
+    runner = commands.add_parser("jobs-run", help="一次性运行或恢复本地 Mock 作业")
+    runner.add_argument("--as-of")
+    for name in ("jobs-list", "feed"):
+        listing = commands.add_parser(name)
+        listing.add_argument("--account", required=True)
+        listing.add_argument("--group", required=True)
+        listing.add_argument("--limit", type=int, default=50 if name == "jobs-list" else 20)
+        if name == "feed":
+            listing.add_argument("--offset", type=int, default=0)
+            listing.add_argument("--as-of")
     for name, help_text in (("demo", "准备合成样本并打开本机来源阅读服务"), ("serve", "只读浏览已有合成数据库")):
         web = commands.add_parser(name, help=help_text)
         web.add_argument("--port", type=int, default=8765)
     args = parser.parse_args(argv)
-    db = None
+    db = jobs_db = None
     try:
         db_path = args.db or ("data/source-demo.db" if args.command == "demo" else "data/radar.db")
+        jobs_path = Path(args.jobs_db) if args.jobs_db else Path(db_path).with_suffix(".jobs.db")
         if args.command in ("demo", "serve"):
-            from .demo import prepare_demo
+            from .demo import prepare_demo, prepare_jobs
             from .server import serve
             if not 1 <= args.port <= 65535:
                 raise ValueError("INVALID_PORT")
             if args.command == "demo":
                 prepare_demo(db_path)
-            serve(db_path, args.port)
+                prepare_jobs(db_path, jobs_path)
+            serve(db_path, args.port, jobs_path)
             return 0
         if args.command == "import":
             config = json.loads(Path(args.allow).read_text(encoding="utf-8"))
@@ -97,6 +119,24 @@ def main(argv=None):
             from .retention import preview
             result = preview(db, args.account, args.group, timestamp_ms(args.as_of) if args.as_of else None,
                              args.limit, args.offset)
+        elif args.command in ("jobs-enqueue", "jobs-run", "jobs-list", "feed"):
+            from . import jobs
+            jobs_db = jobs.connect(jobs_path, readonly=args.command in ("jobs-list", "feed"))
+            as_of = timestamp_ms(args.as_of) if hasattr(args, "as_of") and args.as_of else None
+            if args.command == "jobs-enqueue":
+                from .analysis import load_rules
+                rules = load_rules(args.rules) if args.rules else load_rules()
+                topic = next((item for item in rules["topics"] if item["id"] == args.topic), None)
+                if topic is None:
+                    raise ValueError("UNKNOWN_TOPIC")
+                result = jobs.enqueue(jobs_db, db, args.account, args.group, topic, args.kind,
+                                      timestamp_ms(args.since), timestamp_ms(args.until), as_of)
+            elif args.command == "jobs-run":
+                result = jobs.run(jobs_db, db, as_of)
+            elif args.command == "jobs-list":
+                result = jobs.list_jobs(jobs_db, args.account, args.group, args.limit)
+            else:
+                result = jobs.feed(jobs_db, db, args.account, args.group, as_of, args.limit, args.offset)
         elif args.command in ("analyze", "payload-preview"):
             from .analysis import load_rules, preview
             rules = load_rules(args.rules) if args.rules else load_rules()
@@ -128,3 +168,5 @@ def main(argv=None):
     finally:
         if db is not None:
             db.close()
+        if jobs_db is not None:
+            jobs_db.close()

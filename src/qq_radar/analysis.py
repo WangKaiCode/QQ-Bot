@@ -94,12 +94,12 @@ def validate_output(output, evidence):
         seen.add(key)
 
 
-def preview(db, account, group, topic, kind="hourly", since=None, until=None, provider=mock_provider):
+def preview(db, account, group, topic, kind="hourly", since=None, until=None, provider=mock_provider, *, expires_after=None):
     if not account or not group or kind not in ("hourly", "daily"):
         raise ValueError("INVALID_ANALYSIS_SCOPE")
     if since is not None and until is not None and since >= until:
         raise ValueError("INVALID_WINDOW")
-    for boundary in (since, until):
+    for boundary in (since, until, expires_after):
         if boundary is not None:
             iso(boundary)
     words = validate_keywords(topic.get("keywords"))
@@ -107,6 +107,9 @@ def preview(db, account, group, topic, kind="hourly", since=None, until=None, pr
         raise ValueError("INVALID_TOPIC")
     topic = {"id": topic.get("id", "custom"), "name": topic["name"], "keywords": words}
     conditions, args = ["account_id=?", "group_id=?"], [account, group]
+    if expires_after is not None:
+        conditions.append("expires_at>?")
+        args.append(expires_after)
     for operator, value in ((">=", since), ("<", until)):
         if value is not None:
             conditions.append(f"occurred_at {operator} ?")

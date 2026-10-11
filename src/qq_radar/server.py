@@ -14,8 +14,15 @@ STATIC = {"/": ("index.html", "text/html"), "/app.js": ("app.js", "text/javascri
           "/style.css": ("style.css", "text/css")}
 
 
-def create_server(db_path, port=8765):
+def create_server(db_path, port=8765, jobs_path=None):
     db_path = Path(db_path).resolve()
+    jobs_path = Path(jobs_path).resolve() if jobs_path is not None else db_path.with_suffix(".jobs.db")
+    if jobs_path == db_path or (jobs_path.exists() and jobs_path.samefile(db_path)):
+        raise ValueError("SOURCE_JOBS_PATH_COLLISION")
+    if jobs_path.exists():
+        from .jobs import connect as connect_jobs
+        validated = connect_jobs(jobs_path, readonly=True)
+        validated.close()
     with_db = connect(db_path, readonly=True)
     try:
         if with_db.execute("SELECT 1 FROM messages WHERE namespace != 'synthetic.v1' LIMIT 1").fetchone():
@@ -58,7 +65,7 @@ def create_server(db_path, port=8765):
                 filename, mime = STATIC[parsed.path]
                 self.send_body(200, (ASSETS / filename).read_bytes(), mime)
                 return
-            db = None
+            db = jobs_db = None
             try:
                 params = parse_qs(parsed.query, keep_blank_values=True, max_num_fields=20)
                 def param(name, default=None):
@@ -97,6 +104,23 @@ def create_server(db_path, port=8765):
                     as_of = param("as_of")
                     result = preview(db, param("account"), param("group"), timestamp_ms(as_of) if as_of else None,
                                      int(param("limit", "20")), int(param("offset", "0")))
+                elif route in ("/api/v1/jobs", "/api/v1/feed"):
+                    from . import jobs
+                    account, group = param("account"), param("group")
+                    if not account or not group:
+                        raise ValueError("MISSING_SCOPE")
+                    limit = int(param("limit", "50" if route.endswith("jobs") else "20"))
+                    offset = int(param("offset", "0"))
+                    if not 1 <= limit <= (200 if route.endswith("jobs") else 100) or not 0 <= offset <= 9223372036854775807:
+                        raise ValueError("INVALID_PAGINATION")
+                    as_of = param("as_of")
+                    clock = timestamp_ms(as_of) if as_of else None
+                    if not jobs_path.exists():
+                        result = [] if route.endswith("jobs") else {"mode": "synthetic", "persisted": False, "scheduled": False,
+                                                                   "configured": False, "items": [], "next_offset": None}
+                    else:
+                        jobs_db = jobs.connect(jobs_path, readonly=True)
+                        result = jobs.list_jobs(jobs_db, account, group, limit) if route.endswith("jobs") else jobs.feed(jobs_db, db, account, group, clock, limit, offset)
                 elif route == "/api/v1/conversations":
                     result = [dict(row) for row in db.execute(
                         "SELECT account_id, group_id, count(*) AS message_count FROM messages GROUP BY account_id,group_id ORDER BY account_id,group_id")]
@@ -136,14 +160,16 @@ def create_server(db_path, port=8765):
             finally:
                 if db is not None:
                     db.close()
+                if jobs_db is not None:
+                    jobs_db.close()
 
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     server.daemon_threads = True
     return server
 
 
-def serve(db_path, port):
-    server = create_server(db_path, port)
+def serve(db_path, port, jobs_path=None):
+    server = create_server(db_path, port, jobs_path)
     print(f"合成数据来源阅读：http://127.0.0.1:{server.server_port} （Ctrl+C 停止）", flush=True)
     try:
         server.serve_forever()

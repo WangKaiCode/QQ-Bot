@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = { conversations: [], topics: [], view: "reading", digestVersion: 0, payloadVersion: 0, retentionVersion: 0, retentionOffset: 0, retentionNext: null, retentionAsOf: null, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
+const state = { conversations: [], topics: [], view: "reading", feedVersion: 0, jobsVersion: 0, feedOffset: 0, feedNext: null, digestVersion: 0, payloadVersion: 0, retentionVersion: 0, retentionOffset: 0, retentionNext: null, retentionAsOf: null, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
 const labels = {"demo-account": "演示账号 A", "demo-second-account": "演示账号 B", "demo-tech": "技术交流 · 合成群", "demo-network": "网络讨论 · 合成群"};
 const errorLabels = {IDENTITY_CONFLICT: "同一消息身份的内容冲突，原文保留", INVALID_JSON: "JSON 格式无效", INVALID_FIELD: "字段缺失或格式错误", INVALID_TIMESTAMP: "时间无效", UNSUPPORTED_SCHEMA: "输入版本不支持", DEPTH_LIMIT: "转发层级超限", LINE_LIMIT: "单行大小超限", SEGMENT_LIMIT: "消息段数量超限"};
 function el(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; }
@@ -36,7 +36,7 @@ async function loadMessages() {
       button.setAttribute("aria-pressed", "false"); button.append(messageTop(row), el("div", preview(row), "preview"), el("span", display(row.group_id) + " · " + row.external_id, "source-chip"));
       button.addEventListener("click", () => loadDetail(row.id)); return button;
     }));
-  } catch (error) { if (version === state.listVersion) { blank($("message-list"), "读取失败", "请再次搜索，或检查本机服务。"); showError(error); } }
+  } catch (error) { if (version === state.listVersion && state.view === "reading") { blank($("message-list"), "读取失败", "请再次搜索，或检查本机服务。"); showError(error); } }
 }
 function segments(items, target) {
   for (const segment of items || []) {
@@ -68,7 +68,7 @@ async function loadDetail(id) {
     if (data.after.length) body.append(el("p", "这条消息之后", "context-gap"), ...data.after.map(contextRow)); else body.append(el("p", "当前已导入范围内没有更晚的消息。", "context-gap"));
     const original = el("details", undefined, "original-json"); original.append(el("summary", "查看原始结构"), el("pre", JSON.stringify(row.source, null, 2))); body.append(original); $("detail").replaceChildren(body);
     if (window.matchMedia("(max-width: 820px)").matches) document.querySelector(".detail-panel").scrollIntoView({behavior: "smooth", block: "start"});
-  } catch (error) { if (version === state.detailVersion) { blank($("detail"), "来源暂时不可用", "请重试；没有读取到的内容不会被补写。 "); showError(error); } }
+  } catch (error) { if (version === state.detailVersion && state.view === "reading") { blank($("detail"), "来源暂时不可用", "请重试；没有读取到的内容不会被补写。 "); showError(error); } }
 }
 const batchStatuses = {completed: "处理完成", completed_with_errors: "处理完成 · 有错误", running: "未正常结束或仍在处理", interrupted: "处理已中断"};
 async function showImports() {
@@ -128,6 +128,56 @@ async function loadDigests() {
     }));
   } catch (error) { if (version === state.digestVersion && state.view === "digest") { blank($("digest-list"), "预览未生成", "检查关键词（1–20 个，每个最多 40 字符）或重试。失败时不会展示未经核对的摘录。"); showError(error); } }
 }
+const sourceStates = {available: "来源有效", expired: "来源已到期，摘录不再显示", missing: "来源暂时不可用", changed: "来源已变化，摘录不再显示"};
+async function loadFeed() {
+  const version = ++state.feedVersion; ++state.jobsVersion; $("jobs-list").replaceChildren();
+  clearError(); $("feed-previous").disabled = true; $("feed-next").disabled = true;
+  blank($("feed-list"), "正在读取信息流…", "读取当前群最新成功的本地 Mock 作业。");
+  const current = scope();
+  if (!current.account || !current.group) { blank($("feed-list"), "暂无摘要范围", "先导入合成演示。"); return; }
+  try {
+    const result = await api("/api/v1/feed?" + new URLSearchParams({...current, offset: state.feedOffset, limit: 20}));
+    if (version !== state.feedVersion || state.view !== "feed") return;
+    state.feedNext = result.next_offset;
+    $("feed-previous").disabled = state.feedOffset === 0; $("feed-next").disabled = result.next_offset === null;
+    $("feed-page").textContent = `第 ${Math.floor(state.feedOffset / 20) + 1} 页`;
+    if (!result.items.length) { blank($("feed-list"), "暂无已生成的摘要", "运行 demo 可生成一次合成作业；已有库可通过 CLI 入队并执行。此页面不会自动生成。"); return; }
+    $("feed-list").replaceChildren(...result.items.map(digest => {
+      const card = el("article", undefined, "digest-card");
+      card.append(el("h2", digest.topic.name), el("p", `${digest.window_start} 至 ${digest.window_end} · Mock 文字摘录`, "batch-id"));
+      card.append(el("p", `卡片到期 ${digest.expires_at} · ${digest.state === "expired" ? "卡片已到期" : "引用已保存"}`, "boundary-note"));
+      if (digest.input_changed) card.append(el("p", digest.points.some(point => point.source_state === "available") ? "输入已变化：等待重新生成。" : "来源已变化或到期，当前只保留证据引用。", "coverage"));
+      if (digest.update_pending) card.append(el("p", "新版本尚未成功，当前保留上一成功版本。", "coverage"));
+      for (const point of digest.points) {
+        const evidence = digest.evidence.find(item => item.evidence_id === point.evidence_id);
+        const block = el("div", undefined, "digest-point");
+        if (point.source_state === "available" && point.excerpt) {
+          block.append(el("p", point.excerpt, "text-segment"));
+          const button = el("button", "查看摘要来源", "secondary"); button.type = "button";
+          button.addEventListener("click", () => { setView("reading"); loadDetail(evidence.message_id); }); block.append(button);
+        } else block.append(el("p", sourceStates[point.source_state] || "来源状态未知", "boundary-note"));
+        card.append(block);
+      }
+      const sources = el("details", undefined, "original-json"); sources.append(el("summary", `核对 ${digest.evidence.length} 个来源状态`));
+      for (const item of digest.evidence) sources.append(el("p", `${item.path} · ${sourceStates[item.source_state] || "未知"}`, "batch-id"));
+      card.append(sources); return card;
+    }));
+  } catch (error) { if (version === state.feedVersion && state.view === "feed") { blank($("feed-list"), "信息流读取失败", "检查本机作业库或重试。"); showError(error); } }
+}
+async function showJobs() {
+  const version = ++state.jobsVersion;
+  blank($("jobs-list"), "正在读取作业…", "只查看，不触发生成。");
+  try {
+    const rows = await api("/api/v1/jobs?" + new URLSearchParams({...scope(), limit: 50}));
+    if (version !== state.jobsVersion || state.view !== "feed") return;
+    if (!rows.length) { blank($("jobs-list"), "暂无作业", "先通过命令行生成合成窗口。"); return; }
+    const statuses = {pending: "等待执行", running: "正在执行或租约未结束", succeeded: "成功", failed: "失败，可重试", failed_terminal: "重试次数用尽", superseded: "输入版本已替代", expired: "有效输入或卡片已到期"};
+    $("jobs-list").replaceChildren(...rows.map(row => el("p", `${row.kind === "daily" ? "每日" : "小时"}窗口 ${time(new Date(row.window_start).toISOString(), true)} · ${statuses[row.status] || row.status} · 尝试 ${row.attempts} 次${row.error_code ? " · " + row.error_code : ""}`, "batch-id")));
+  } catch (error) { if (version === state.jobsVersion && state.view === "feed") { blank($("jobs-list"), "作业读取失败", "请重试。"); showError(error); } }
+}
+$("jobs-refresh").addEventListener("click", showJobs);
+$("feed-previous").addEventListener("click", () => { state.feedOffset = Math.max(0, state.feedOffset - 20); loadFeed(); });
+$("feed-next").addEventListener("click", () => { if (state.feedNext !== null) { state.feedOffset = state.feedNext; loadFeed(); } });
 async function inspectPayload() {
   const version = ++state.payloadVersion;
   clearError(); blank($("payload-result"), "正在本地检查…", "不发起外部请求。");
@@ -177,21 +227,24 @@ async function loadRetention() {
   } catch (error) { if (version === state.retentionVersion && state.view === "retention") { blank($("retention-list"), "保留范围检查失败", "检查时间需含时区；失败时不会执行任何清理。"); showError(error); } }
 }
 function setView(view) {
-  ++state.importVersion; ++state.digestVersion; ++state.retentionVersion; ++state.payloadVersion; state.view = view;
-  for (const name of ["reading", "imports", "digest", "retention"]) {
+  ++state.importVersion; ++state.digestVersion; ++state.retentionVersion; ++state.payloadVersion; ++state.feedVersion; ++state.jobsVersion; state.view = view;
+  for (const name of ["reading", "imports", "digest", "retention", "feed"]) {
     $(name + "-view").hidden = name !== view;
     const button = $(name + "-tab"); button.classList.toggle("active", name === view);
     if (name === view) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
   }
   $("filters").hidden = view === "imports";
   document.querySelector("#filters .search-label").hidden = view !== "reading";
-  $("page-title").textContent = {reading: "原文阅读", imports: "导入记录", digest: "摘要预览", retention: "保留预览"}[view];
-  $("page-description").textContent = {reading: "保留消息的来处，也保留讨论的脉络。", imports: "看清已处理的内容，也看清失败的原因。", digest: "先聚合命中的讨论，再回到每一条来源。", retention: "看清保存期限和到期范围，再决定清理流程。"}[view];
-  clearError(); if (view === "imports") showImports(); else if (view === "digest") loadDigests(); else if (view === "retention") loadRetention();
+  $("page-title").textContent = {reading: "原文阅读", imports: "导入记录", digest: "摘要预览", retention: "保留预览", feed: "信息流"}[view];
+  $("page-description").textContent = {reading: "保留消息的来处，也保留讨论的脉络。", imports: "看清已处理的内容，也看清失败的原因。", digest: "先聚合命中的讨论，再回到每一条来源。", retention: "看清保存期限和到期范围，再决定清理流程。", feed: "按窗口阅读，追踪变化，随时核对来源。"}[view];
+  document.title = "QQ 信息雷达 · " + $("page-title").textContent;
+  clearError(); if (view === "imports") showImports(); else if (view === "digest") loadDigests(); else if (view === "retention") loadRetention(); else if (view === "feed") loadFeed();
 }
-for (const name of ["reading", "imports", "digest", "retention"]) $(name + "-tab").addEventListener("click", () => setView(name));
-function scopeChanged() { state.offset = 0; loadMessages(); if (state.view === "digest") loadDigests(); if (state.view === "retention") { state.retentionOffset = 0; loadRetention(); } }
+for (const name of ["reading", "imports", "digest", "retention", "feed"]) $(name + "-tab").addEventListener("click", () => setView(name));
+function scopeChanged() { state.offset = 0; loadMessages(); if (state.view === "digest") loadDigests(); if (state.view === "retention") { state.retentionOffset = 0; loadRetention(); } if (state.view === "feed") { state.feedOffset = 0; loadFeed(); } }
 $("account").addEventListener("change", () => { setGroups(); scopeChanged(); }); $("group").addEventListener("change", scopeChanged);
+$("digest-keywords").addEventListener("input", () => { ++state.payloadVersion; ++state.digestVersion; $("payload-result").replaceChildren(); $("digest-coverage").textContent = ""; blank($("digest-list"), "关注词已修改", "点击生成预览应用新关键词。"); });
+$("digest-kind").addEventListener("change", () => { ++state.digestVersion; $("digest-coverage").textContent = ""; blank($("digest-list"), "归组方式已修改", "点击生成预览应用新窗口。"); });
 $("topic").addEventListener("change", () => { selectTopic(); loadDigests(); });
 $("digest-settings").addEventListener("submit", event => { event.preventDefault(); loadDigests(); });
 $("filters").addEventListener("submit", event => { event.preventDefault(); state.offset = 0; state.keyword = $("keyword").value; loadMessages(); });

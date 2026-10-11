@@ -42,4 +42,4 @@ QQ-Bot/
 
 ## 当前可运行增量（2026-10-11）
 
-第一阶段说明中的“没有应用 / 测试”是历史状态；TASK-004 / 013 / 014 已实现待验收。运行 `python qq_bot.py demo` 后，可体验原文阅读、导入记录和本地 Mock 摘要预览。筛选与原文回看说明见 [analysis_usage.md](docs/analysis_usage.md)，当前状态见 [status.md](docs/status.md)。仍只使用合成数据，无真实 QQ / AI / 自动清理 / 部署。
+第一阶段说明中的“没有应用 / 测试”是历史状态；TASK-004、013 至 017 已实现待验收。运行 `python qq_bot.py demo` 后，可体验信息流、原文阅读、导入记录、Mock 摘要、保留预览和候选载荷检查。信息流说明见 [jobs_usage.md](docs/jobs_usage.md)，当前状态见 [status.md](docs/status.md)。仍只使用合成数据，无真实 QQ / AI / 自动清理 / 部署。

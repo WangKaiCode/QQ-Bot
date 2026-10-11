@@ -62,3 +62,5 @@ raw_json、转发文本、OCR、副本、导入文件、附件与索引都应纳
 本轮 schema 仍为 user_version=1，未建立摘要、订阅或作业表。分析读取 messages / message_segments，在单个只读事务中得到一致快照。input_revision 为窗口内消息 ID / payload_hash 的稳定摘要；预览 ID 包含账号、群、窗口种类、分桶起点、筛选边界、主题规则和输入版本。匿名证据号由窗口 / 消息 / 路径哈希生成，应用内映射回原文；不代表正文已去身份。预览与临时设置不持久化，终端 JSON 输出或截图的自行保存不构成应用的十天摘要存储契约。真实到期清理尚未执行。
 
 TASK-015（2026-10-11）：无 schema 改变，只读扫描已有 expires_at；当前期限由 ingestion 按 occurred_at+3天写入，历史补录可能立即进入到期候选。预览同时计 message_segments 和 observations（重复观测也有原文副本），只报告不删除。托管媒体当前未下载，文件计数为 0 不表示媒体清理已实现。
+
+TASK-017：原文 schema 不变；独立作业 SQLite schema v1，以 jobs_metadata 标识 qq-radar.mock-jobs.v1。jobs 保存范围 / 规则 / 修订、状态 / 尝试次数 / 五分钟租约 / claim_token、固定窗口结束加十天期限及结果引用。引用结果不复制摘录；读取信息流时按来源哈希和期限动态补充。规则与命中词自身可能敏感。两库不允许同路径 / 同文件；不宣称跨库原子事务。完整状态和到期契约见 jobs_usage.md。
