@@ -762,3 +762,6 @@ h1 {
   .digest-card { padding: 16px; }
   .evidence-row { flex-direction: column; align-items: start; gap: 6px; }
 }
+
+.request-hash { display: block; overflow-wrap: anywhere; font-size: 12px; margin-bottom: 12px; }
+.request-json { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; padding: 12px; background: #f5f6f2; border-radius: 8px; max-height: 420px; overflow-y: auto; }

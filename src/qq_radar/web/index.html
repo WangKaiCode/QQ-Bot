@@ -48,6 +48,7 @@
       <div id="digest-coverage" class="coverage" aria-live="polite"></div>
       <div id="digest-list" aria-live="polite"></div>
       <div class="digest-card"><h2>候选文字载荷检查</h2><p class="boundary-note">仅在本机屏蔽已知身份和联系方式，不发送给 AI。未知姓名及上下文身份可能遗漏，仍需人工核对；不能据此认定已安全脱敏。</p><button id="payload-preview" type="button" class="secondary">检查当前关键词的候选载荷</button><div id="payload-result" aria-live="polite"></div></div>
+      <div class="digest-card"><h2>DeepSeek 请求预览</h2><p class="boundary-note">先查看将发送的候选文字与请求哈希。不读取本机密钥，不调用 AI；当前群全部命中段参与构造，不按上方小时 / 日分桶。</p><button id="provider-preview" type="button" class="secondary">查看 DeepSeek 候选请求</button><div id="provider-result" aria-live="polite"></div></div>
     </section>
     <section id="reading-view" aria-labelledby="page-title">
       <div class="reader-grid">

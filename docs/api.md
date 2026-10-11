@@ -77,3 +77,5 @@ TASK-024 新增 CLI provider-preview，先复用 outbound.prepare 再构造离�
 TASK-025 新增 CLI deepseek-call，独立调用模块 / 预算账本；固定合成候选、请求 SHA 复核、Flash 与官方 endpoint，每次 1 元预留、月不高于 20 元，不重试。成功 sent=true 仅表明本次响应结构已验证，不授权转发或证明摘要事实质量。没有新增 HTTP 发送端点或周期 AI；具体错误、期限与预算局限见 deepseek_usage.md。
 
 TASK-026 新增 CLI deepseek-budget / budget_status，只读本机指定月份预算状态，不需要来源库、配置或网络。--monthly-budget 仅显示上限，不修改调用授权；输出金额与三状态计数，不提供请求记录 / 正文 / 密钥，错误为固定代码。
+
+TASK-027 新增只读 GET /api/v1/provider/preview，参数 account / group / topic / keywords / since / until / model / max_tokens；返回同 CLI envelope 加 request_sha256。复用合成源库、Host / Origin 和候选屏蔽门禁，不读取密钥、不访问预算库、不新增发送端点。网页默认 Flash / 1024，当前范围全部命中段，不使用归组 kind。

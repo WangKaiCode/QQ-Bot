@@ -67,3 +67,5 @@ PR #2 最新 head b79e23c 已独立复核，原检查缺陷与 action 发布依�
 离线命令与白名单见 offline_usage.md；网页启动与体验见 web_usage.md；筛选与摘要预览见 analysis_usage.md；暂无部署步骤。以 Git 提交历史核验每个增量交付版本。
 
 本轮最新：TASK-026 只读预算查询已实现待验收，全套 166 项通过、独立审查通过；`python qq_bot.py deepseek-budget` 不需密钥 / 来源库 / 网络，当前预留 1 元、剩余 19 元，见 task026_validation.md。用户确认使用 Clash Verge TUN，并担心关闭会断开会话：保持网络开启，只做无密钥路径检查，不关闭 TUN 或 TLS。
+
+TASK-026 提交 1488e26 已正常推送。TASK-027 网页候选请求已实现待验收，完整 174 项通过、独立审查 / 浏览器 / 窄屏检查通过，见 task027_validation.md；仅只读构造，不开启网页 API 调用。专属合成演示 127.0.0.1:8774 可体验。Clash 本机 7897 代理及 PowerShell 无密钥对照仍 TLS 失败，未改用户 TUN / 网络。下一步优先恢复 DeepSeek 官方 HTTPS 路径、批准 PR #2 工作流实际两系统验证；采集组件许可前置继续调查，真实数据 / 周期外发 / 清理 / 部署边界不扩大。

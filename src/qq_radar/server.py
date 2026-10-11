@@ -1,4 +1,5 @@
 """Read-only loopback viewer for synthetic databases. Not a deployment server."""
+import hashlib
 import json
 import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -99,6 +100,15 @@ def create_server(db_path, port=8765, jobs_path=None):
                     since, until = param("since"), param("until")
                     result = prepare(db, param("account"), param("group"), configured_topic(),
                                      timestamp_ms(since) if since else None, timestamp_ms(until) if until else None)
+                elif route == "/api/v1/provider/preview":
+                    from .outbound import prepare
+                    from .providers import build_request, _json
+                    since, until = param("since"), param("until")
+                    candidate = prepare(db, param("account"), param("group"), configured_topic(),
+                                        timestamp_ms(since) if since else None, timestamp_ms(until) if until else None)
+                    result = build_request(candidate, param("model", "deepseek-flash"), int(param("max_tokens", "1024")))
+                    result["request_sha256"] = hashlib.sha256(
+                        _json(result["request"], "INVALID_PROVIDER_REQUEST_PREVIEW").encode("utf-8")).hexdigest()
                 elif route == "/api/v1/retention/preview":
                     from .retention import preview
                     as_of = param("as_of")

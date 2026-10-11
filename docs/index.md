@@ -37,6 +37,7 @@
 | [provider_usage.md](provider_usage.md) | DeepSeek 离线接口、证据校验与调用前置 | 随 TASK-024 维护 |
 | [task024_validation.md](task024_validation.md) | 离线供应商接口与模拟响应验证 | 仅实际结果 |
 | [deepseek_usage.md](deepseek_usage.md) | 单次合成调用、本机密钥与预算预留 | 随 TASK-025 维护 |
+| [task027_validation.md](task027_validation.md) | 网页候选请求与 HTTP / 浏览器验证 | 仅实际结果 |
 | [task026_validation.md](task026_validation.md) | 只读预算汇总与 CLI 验证 | 仅实际结果 |
 | [task025_validation.md](task025_validation.md) | 预算竞争、模拟传输及 CLI 验证 | 区分模拟与真实调用 |
 | [real_ingestion_proposal.md](real_ingestion_proposal.md) | 已批准受限试验、许可与本机前置核验 | 实际启动前继续核验 |

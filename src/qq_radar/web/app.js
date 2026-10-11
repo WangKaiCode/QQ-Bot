@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = { conversations: [], topics: [], view: "reading", feedVersion: 0, jobsVersion: 0, feedOffset: 0, feedNext: null, digestVersion: 0, payloadVersion: 0, retentionVersion: 0, retentionOffset: 0, retentionNext: null, retentionAsOf: null, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
+const state = { conversations: [], topics: [], view: "reading", feedVersion: 0, jobsVersion: 0, feedOffset: 0, feedNext: null, digestVersion: 0, payloadVersion: 0, providerVersion: 0, retentionVersion: 0, retentionOffset: 0, retentionNext: null, retentionAsOf: null, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
 const labels = {"demo-account": "演示账号 A", "demo-second-account": "演示账号 B", "demo-tech": "技术交流 · 合成群", "demo-network": "网络讨论 · 合成群"};
 const errorLabels = {IDENTITY_CONFLICT: "同一消息身份的内容冲突，原文保留", INVALID_JSON: "JSON 格式无效", INVALID_FIELD: "字段缺失或格式错误", INVALID_TIMESTAMP: "时间无效", UNSUPPORTED_SCHEMA: "输入版本不支持", DEPTH_LIMIT: "转发层级超限", LINE_LIMIT: "单行大小超限", SEGMENT_LIMIT: "消息段数量超限"};
 function el(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; }
@@ -91,7 +91,7 @@ function selectTopic() {
   $("digest-keywords").value = topic ? topic.keywords.join(",") : "";
 }
 async function loadDigests() {
-  const version = ++state.digestVersion; ++state.payloadVersion; $("payload-result").replaceChildren();
+  const version = ++state.digestVersion; ++state.payloadVersion; resetProvider(); $("payload-result").replaceChildren();
   clearError(); $("digest-coverage").textContent = "";
   blank($("digest-list"), "正在生成本地预览…", "按当前关键词核对文本与来源。");
   const current = scope();
@@ -199,6 +199,36 @@ async function inspectPayload() {
   } catch (error) { if (version === state.payloadVersion && state.view === "digest") { blank($("payload-result"), "载荷检查失败", "不会发送任何内容；检查当前关键词或重试。"); showError(error); } }
 }
 $("payload-preview").addEventListener("click", inspectPayload);
+
+function resetProvider() { ++state.providerVersion; $("provider-result").replaceChildren(); }
+async function inspectProvider() {
+  const version = ++state.providerVersion;
+  clearError(); blank($("provider-result"), "正在构造本地请求…", "不读取密钥，不调用 DeepSeek。");
+  try {
+    const params = new URLSearchParams({...scope(), topic: $("topic").value, keywords: $("digest-keywords").value});
+    const result = await api("/api/v1/provider/preview?" + params);
+    if (version !== state.providerVersion || state.view !== "digest") return;
+    const box = el("div");
+    box.append(el("p", `未发送 · ${result.request.model} · 输出上限 ${result.request.max_tokens} token · 仍需人工复核`, "coverage"));
+    box.append(el("h3", "候选请求 SHA256"), el("code", result.request_sha256, "request-hash"));
+    box.append(el("p", "本次按当前群与关键词构造请求，包含全部可复核命中段；小时 / 日归组选择不改变这个请求范围。修改关键词或群后须重新检查。", "boundary-note"));
+    const evidence = JSON.parse(result.request.messages[1].content).evidence;
+    box.append(el("h3", "将发送的候选文字"));
+    for (const item of evidence) {
+      const row = el("div", undefined, "digest-point");
+      row.append(el("code", item.evidence_id), el("p", item.sanitized_text, "text-segment")); box.append(row);
+    }
+    const details = el("details"); details.append(el("summary", "查看完整请求 JSON"), el("pre", JSON.stringify(result.request, null, 2), "request-json"));
+    box.append(details, el("p", "网页只构造请求。实际合成调用仍使用命令行受控入口，禁止发送图片；未知身份可能遗漏，哈希不代表匿名化或人工审查已完成。", "boundary-note"));
+    $("provider-result").replaceChildren(box);
+  } catch (error) {
+    if (version === state.providerVersion && state.view === "digest") {
+      blank($("provider-result"), "请求预览未生成", "候选可能被屏蔽规则阻断、没有命中或超过限额；可先查看候选载荷检查。没有调用外部服务。"); showError(error);
+    }
+  }
+}
+$("provider-preview").addEventListener("click", inspectProvider);
+
 async function loadRetention() {
   const version = ++state.retentionVersion;
   clearError(); $("retention-coverage").textContent = "";
@@ -227,7 +257,7 @@ async function loadRetention() {
   } catch (error) { if (version === state.retentionVersion && state.view === "retention") { blank($("retention-list"), "保留范围检查失败", "检查时间需含时区；失败时不会执行任何清理。"); showError(error); } }
 }
 function setView(view) {
-  ++state.importVersion; ++state.digestVersion; ++state.retentionVersion; ++state.payloadVersion; ++state.feedVersion; ++state.jobsVersion; state.view = view;
+  resetProvider(); ++state.importVersion; ++state.digestVersion; ++state.retentionVersion; ++state.payloadVersion; ++state.feedVersion; ++state.jobsVersion; state.view = view;
   for (const name of ["reading", "imports", "digest", "retention", "feed"]) {
     $(name + "-view").hidden = name !== view;
     const button = $(name + "-tab"); button.classList.toggle("active", name === view);
@@ -241,10 +271,10 @@ function setView(view) {
   clearError(); if (view === "imports") showImports(); else if (view === "digest") loadDigests(); else if (view === "retention") loadRetention(); else if (view === "feed") loadFeed();
 }
 for (const name of ["reading", "imports", "digest", "retention", "feed"]) $(name + "-tab").addEventListener("click", () => setView(name));
-function scopeChanged() { state.offset = 0; loadMessages(); if (state.view === "digest") loadDigests(); if (state.view === "retention") { state.retentionOffset = 0; loadRetention(); } if (state.view === "feed") { state.feedOffset = 0; loadFeed(); } }
+function scopeChanged() { resetProvider(); state.offset = 0; loadMessages(); if (state.view === "digest") loadDigests(); if (state.view === "retention") { state.retentionOffset = 0; loadRetention(); } if (state.view === "feed") { state.feedOffset = 0; loadFeed(); } }
 $("account").addEventListener("change", () => { setGroups(); scopeChanged(); }); $("group").addEventListener("change", scopeChanged);
-$("digest-keywords").addEventListener("input", () => { ++state.payloadVersion; ++state.digestVersion; $("payload-result").replaceChildren(); $("digest-coverage").textContent = ""; blank($("digest-list"), "关注词已修改", "点击生成预览应用新关键词。"); });
-$("digest-kind").addEventListener("change", () => { ++state.digestVersion; $("digest-coverage").textContent = ""; blank($("digest-list"), "归组方式已修改", "点击生成预览应用新窗口。"); });
+$("digest-keywords").addEventListener("input", () => { resetProvider(); ++state.payloadVersion; ++state.digestVersion; $("payload-result").replaceChildren(); $("digest-coverage").textContent = ""; blank($("digest-list"), "关注词已修改", "点击生成预览应用新关键词。"); });
+$("digest-kind").addEventListener("change", () => { resetProvider(); ++state.digestVersion; $("digest-coverage").textContent = ""; blank($("digest-list"), "归组方式已修改", "点击生成预览应用新窗口。"); });
 $("topic").addEventListener("change", () => { selectTopic(); loadDigests(); });
 $("digest-settings").addEventListener("submit", event => { event.preventDefault(); loadDigests(); });
 $("filters").addEventListener("submit", event => { event.preventDefault(); state.offset = 0; state.keyword = $("keyword").value; loadMessages(); });
