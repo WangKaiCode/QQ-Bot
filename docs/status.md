@@ -33,7 +33,7 @@
 
 ## 下一步
 
-2026-10-11 用户要求继续 Codex / Copilot 协作（DEC-028）。TASK-021 仓库指引与 CI 任务规格已准备，见 copilot_handoff.md。GitHub 插件已安装启用，但本会话无 Issue / PR 工具且浏览器未登录；用户需自行连接 / 登录后核验余额及 Copilot 入口，方可派发 TASK-022。尚未建立 Issue / PR、启动 Copilot 或消耗学生额度。此增量只有指引 / 文档，不重复执行应用测试；既有 100 项证据不当作云端 / Linux 已通过。
+2026-10-11 用户要求继续 Codex / Copilot 协作（DEC-028）。TASK-021 仓库指引、连接与权限核验完成，见 copilot_handoff.md。用户确认仍有包含额度且额外计费关闭后，TASK-022 已通过 GitHub 工具指派一次，Copilot 创建 [草稿 PR #2](https://github.com/WangKaiCode/QQ-Bot/pull/2)，关联 [Issue #1](https://github.com/WangKaiCode/QQ-Bot/issues/1)。尚未完成代码审查或两系统测试验收，不重复启动任务、不自行合并。下次读取 PR 最新变更和 checks，按专属文件及验收规格审查。此增量只有交接文档，不重复执行应用测试；既有 100 项证据不当作云端 / Linux 已通过。Codex 五小时额度瞬时读数已用 97%，按用户要求优先完成在手提交与交接。
 
 运行 `python qq_bot.py demo`，在本机浏览器体验信息流、来源阅读与摘要预览；当前演示仅合成内容。TASK-017 已实现独立作业库、幂等触发、租约恢复、引用信息流与到期状态；68 项自动化测试和实际浏览器验证通过，见 [说明](jobs_usage.md)、[验证](task017_validation.md)，待甲方验收。真实 AI 和后台定时器尚未实现。
 

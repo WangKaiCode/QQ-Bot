@@ -24,8 +24,8 @@
 | TASK-018 | OneBot 离线适配与有限内存探针；REQ-001、002、003、015、018 | 待验收（离线子集已实现） | [说明](onebot_usage.md)、[验证](task018_validation.md)；17 核心 / CLI 测试，合成回放；独立接收层见 TASK-019，许可未明确前不安装 / 启动真实通信 |
 | TASK-019 | 认证的本机内存接收层；REQ-001、003、015、018 | 待验收（接收层已实现） | [说明](probe_usage.md)、[验证](task019_validation.md)；15 新增 HTTP / CLI 测试，仅合成请求，不启动 QQ / NapCat，真实许可与第三方保留仍待核验 |
 | TASK-020 | 首次 GitHub 同步与授权记录；REQ-018 | 完成 | DEC-027；保留远端 LICENSE / 初始化、历史路径与凭据模式检查、SSH 正常推送 main；应用未部署 |
-| TASK-021 | Codex / Copilot 协作入口与连接核验；REQ-018 | 完成（准备子集） | [协作与首个任务](copilot_handoff.md)、仓库指引；插件已启用，实际浏览器未登录，未派发 |
-| TASK-022 | Copilot 首轮 Windows / Linux CI；REQ-015、018 | 待开始（账号连接前置） | [任务规格](copilot_handoff.md)；仅 workflow / 测试说明，需实际两系统测试通过后验收 |
+| TASK-021 | Codex / Copilot 协作入口与连接核验；REQ-018 | 完成 | [协作与首个任务](copilot_handoff.md)、仓库指引；GitHub 工具返回账号与仓库权限，额度及额外计费状态由用户确认 |
+| TASK-022 | Copilot 首轮 Windows / Linux CI；REQ-015、018 | 进行中（Copilot 已接单） | [任务规格](copilot_handoff.md)、Issue #1 / 草稿 PR #2；仅 workflow / 测试说明，待实际两系统测试和 Codex 审查，不自行合并 |
 
 用户已通过 DEC-014 解除无代码阶段限制，并以 DEC-015 明确要求完成 TASK-004。离线增量已实现，TASK-012 本地基线已完成；结合 TASK-011 继续体验设计，无需让甲方承担技术规格编写。
 
