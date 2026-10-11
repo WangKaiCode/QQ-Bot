@@ -117,6 +117,18 @@ class WebTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SYNTHETIC_ONLY"):
             create_server(self.db_path, 0)
 
+    def test_outbound_candidate_never_authorizes_send(self):
+        before = self.db_path.read_bytes()
+        query = urlencode({"account": "demo-account", "group": "demo-tech", "topic": "ai"})
+        result = self.get("/api/v1/outbound/preview?" + query)
+        self.assertFalse(result["allowed_to_send"])
+        self.assertTrue(result["requires_human_review"])
+        self.assertEqual(len(result["payload"]["evidence"]), 4)
+        self.assertNotIn("synthetic-reader", json.dumps(result))
+        self.assertNotIn("message_id", json.dumps(result["payload"]))
+        self.assertEqual(self.request("/api/v1/outbound/preview?" + query + "&keywords=")[0], 400)
+        self.assertEqual(self.db_path.read_bytes(), before)
+
     def test_retention_preview_is_metadata_only_and_readonly(self):
         before = self.db_path.read_bytes()
         route = "/api/v1/retention/preview?" + urlencode({"account": "demo-account", "group": "demo-tech", "as_of": "2099-01-01T00:00:00+08:00", "limit": 2})

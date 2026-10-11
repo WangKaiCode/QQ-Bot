@@ -43,6 +43,13 @@ def main(argv=None):
     analysis.add_argument("--kind", choices=("hourly", "daily"), default="hourly")
     analysis.add_argument("--since")
     analysis.add_argument("--until")
+    payload = commands.add_parser("payload-preview", help="本地检查候选文字载荷，不发送")
+    payload.add_argument("--account", required=True)
+    payload.add_argument("--group", required=True)
+    payload.add_argument("--rules")
+    payload.add_argument("--topic", default="ai")
+    payload.add_argument("--since")
+    payload.add_argument("--until")
     retention = commands.add_parser("retention-preview", help="只读查看到期范围，不删除")
     retention.add_argument("--account", required=True)
     retention.add_argument("--group", required=True)
@@ -90,15 +97,19 @@ def main(argv=None):
             from .retention import preview
             result = preview(db, args.account, args.group, timestamp_ms(args.as_of) if args.as_of else None,
                              args.limit, args.offset)
-        elif args.command == "analyze":
+        elif args.command in ("analyze", "payload-preview"):
             from .analysis import load_rules, preview
             rules = load_rules(args.rules) if args.rules else load_rules()
             topic = next((item for item in rules["topics"] if item["id"] == args.topic), None)
             if topic is None:
                 raise ValueError("UNKNOWN_TOPIC")
-            result = preview(db, args.account, args.group, topic, args.kind,
-                             timestamp_ms(args.since) if args.since else None,
-                             timestamp_ms(args.until) if args.until else None)
+            since = timestamp_ms(args.since) if args.since else None
+            until = timestamp_ms(args.until) if args.until else None
+            if args.command == "payload-preview":
+                from .outbound import prepare
+                result = prepare(db, args.account, args.group, topic, since, until)
+            else:
+                result = preview(db, args.account, args.group, topic, args.kind, since, until)
         else:
             result = search(db, args.account, args.group, args.keyword,
                             timestamp_ms(args.since) if args.since else None,

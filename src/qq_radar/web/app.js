@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = { conversations: [], topics: [], view: "reading", digestVersion: 0, retentionVersion: 0, retentionOffset: 0, retentionNext: null, retentionAsOf: null, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
+const state = { conversations: [], topics: [], view: "reading", digestVersion: 0, payloadVersion: 0, retentionVersion: 0, retentionOffset: 0, retentionNext: null, retentionAsOf: null, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
 const labels = {"demo-account": "演示账号 A", "demo-second-account": "演示账号 B", "demo-tech": "技术交流 · 合成群", "demo-network": "网络讨论 · 合成群"};
 const errorLabels = {IDENTITY_CONFLICT: "同一消息身份的内容冲突，原文保留", INVALID_JSON: "JSON 格式无效", INVALID_FIELD: "字段缺失或格式错误", INVALID_TIMESTAMP: "时间无效", UNSUPPORTED_SCHEMA: "输入版本不支持", DEPTH_LIMIT: "转发层级超限", LINE_LIMIT: "单行大小超限", SEGMENT_LIMIT: "消息段数量超限"};
 function el(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; }
@@ -91,7 +91,7 @@ function selectTopic() {
   $("digest-keywords").value = topic ? topic.keywords.join(",") : "";
 }
 async function loadDigests() {
-  const version = ++state.digestVersion;
+  const version = ++state.digestVersion; ++state.payloadVersion; $("payload-result").replaceChildren();
   clearError(); $("digest-coverage").textContent = "";
   blank($("digest-list"), "正在生成本地预览…", "按当前关键词核对文本与来源。");
   const current = scope();
@@ -128,6 +128,27 @@ async function loadDigests() {
     }));
   } catch (error) { if (version === state.digestVersion && state.view === "digest") { blank($("digest-list"), "预览未生成", "检查关键词（1–20 个，每个最多 40 字符）或重试。失败时不会展示未经核对的摘录。"); showError(error); } }
 }
+async function inspectPayload() {
+  const version = ++state.payloadVersion;
+  clearError(); blank($("payload-result"), "正在本地检查…", "不发起外部请求。");
+  try {
+    const params = new URLSearchParams({...scope(), topic: $("topic").value, keywords: $("digest-keywords").value});
+    const result = await api("/api/v1/outbound/preview?" + params);
+    if (version !== state.payloadVersion || state.view !== "digest") return;
+    const report = result.report;
+    const box = el("div");
+    box.append(el("p", `已检查 ${report.selected_evidence} 个命中段 · 候选 ${report.candidate_evidence} 段 · ${report.empty_after_redaction} 段屏蔽后无可读文字`, "boundary-note"));
+    if (report.blocked) {
+      const reasons = {AMBIGUOUS_SHORT_IDENTITY: "短身份字符串与普通词难以区分", RESIDUAL_KNOWN_IDENTITY: "仍检测到已知身份字符串", SENSITIVE_KEYWORD: "关注词本身包含敏感身份或联系方式", OUTBOUND_EVIDENCE_LIMIT: "命中段数量超限", OUTBOUND_TEXT_LIMIT: "文字量超限", NO_REVIEWABLE_EVIDENCE: "没有可供复核的文字"};
+      box.append(el("p", "本次已阻断候选载荷：" + (reasons[report.blocked_reason] || "检查未通过") + "。计数可能只覆盖阻断前已检查的部分。", "batch-error"));
+    } else {
+      box.append(el("p", "已知信息屏蔽完成 · 未发送 · 仍需人工复核", "coverage"));
+      for (const item of result.payload.evidence) box.append(el("p", item.sanitized_text, "text-segment"));
+    }
+    $("payload-result").replaceChildren(box);
+  } catch (error) { if (version === state.payloadVersion && state.view === "digest") { blank($("payload-result"), "载荷检查失败", "不会发送任何内容；检查当前关键词或重试。"); showError(error); } }
+}
+$("payload-preview").addEventListener("click", inspectPayload);
 async function loadRetention() {
   const version = ++state.retentionVersion;
   clearError(); $("retention-coverage").textContent = "";
@@ -156,7 +177,7 @@ async function loadRetention() {
   } catch (error) { if (version === state.retentionVersion && state.view === "retention") { blank($("retention-list"), "保留范围检查失败", "检查时间需含时区；失败时不会执行任何清理。"); showError(error); } }
 }
 function setView(view) {
-  ++state.importVersion; ++state.digestVersion; ++state.retentionVersion; state.view = view;
+  ++state.importVersion; ++state.digestVersion; ++state.retentionVersion; ++state.payloadVersion; state.view = view;
   for (const name of ["reading", "imports", "digest", "retention"]) {
     $(name + "-view").hidden = name !== view;
     const button = $(name + "-tab"); button.classList.toggle("active", name === view);

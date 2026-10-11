@@ -66,6 +66,14 @@ def create_server(db_path, port=8765):
                     if len(values) != 1:
                         raise ValueError("DUPLICATE_PARAMETER")
                     return values[0]
+                def configured_topic():
+                    from .analysis import load_rules, validate_keywords
+                    selected = next((dict(item) for item in load_rules()["topics"] if item["id"] == param("topic", "ai")), None)
+                    if selected is None:
+                        raise ValueError("UNKNOWN_TOPIC")
+                    if "keywords" in params:
+                        selected["keywords"] = validate_keywords(param("keywords").split(","))
+                    return selected
                 db = connect(db_path, readonly=True)
                 route = parsed.path
                 if route == "/api/v1/health":
@@ -74,14 +82,15 @@ def create_server(db_path, port=8765):
                     from .analysis import load_rules
                     result = load_rules()["topics"]
                 elif route == "/api/v1/analysis/preview":
-                    from .analysis import load_rules, preview, validate_keywords
-                    topic = next((dict(item) for item in load_rules()["topics"] if item["id"] == param("topic", "ai")), None)
-                    if topic is None:
-                        raise ValueError("UNKNOWN_TOPIC")
-                    if "keywords" in params:
-                        topic["keywords"] = validate_keywords(param("keywords").split(","))
+                    from .analysis import preview
+                    topic = configured_topic()
                     since, until = param("since"), param("until")
                     result = preview(db, param("account"), param("group"), topic, param("kind", "hourly"),
+                                     timestamp_ms(since) if since else None, timestamp_ms(until) if until else None)
+                elif route == "/api/v1/outbound/preview":
+                    from .outbound import prepare
+                    since, until = param("since"), param("until")
+                    result = prepare(db, param("account"), param("group"), configured_topic(),
                                      timestamp_ms(since) if since else None, timestamp_ms(until) if until else None)
                 elif route == "/api/v1/retention/preview":
                     from .retention import preview

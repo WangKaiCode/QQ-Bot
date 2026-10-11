@@ -27,6 +27,8 @@
 | [task014_validation.md](task014_validation.md) | 规则 / 摘录边界与浏览器检查证据 | 仅记录实际结果 |
 | [retention_usage.md](retention_usage.md) | 到期范围只读检查与统计含义 | 随 TASK-015 维护 |
 | [task015_validation.md](task015_validation.md) | 保留预览验证证据 | 仅实际结果 |
+| [outbound_usage.md](outbound_usage.md) | 本地候选载荷检查与隐私边界 | 随 TASK-016 维护 |
+| [task016_validation.md](task016_validation.md) | 载荷检查验证记录 | 仅实际结果 |
 
 项目根目录的 [AGENTS.md](../AGENTS.md) 是后续 Codex 的开发入口规则。已有 [README.md](../README.md) 保留第一阶段说明；最新开发状态以本入口和 status.md 为准。
 

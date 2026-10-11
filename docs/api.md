@@ -61,3 +61,5 @@ GET /api/v1/topics 返回默认 rules.v1 主题列表。GET /api/v1/analysis/pre
 ## TASK-015 保留范围 GET 子集
 
 GET /api/v1/retention/preview 要求 account、group；as_of 可传带时区 ISO 时间，默认当前时刻；limit 为 1–100，offset 非负。返回 policy、as_of、scope、counts、items 与 next_offset，readonly=true / executed=false。候选为 expires_at<=as_of 且 available 的消息，只有 ID / external_id / 到期时间 / 状态 / 段数 / 观测数，不含正文和发送者。全部统计在同一只读事务内，按时间和身份稳定分页；翻页应用保存首次 as_of。上表 POST 清理预览仍为路线提案。字段解释见 retention_usage.md。
+
+TASK-016：GET /api/v1/outbound/preview 的范围 / 规则参数复用 analysis/preview（不支持kind参数），返回 payload（或null）、report、allowed_to_send=false、requires_human_review=true。仅离线检查、绝不发送；非法查询400。阻断理由和统计不回显身份 / 原文，未知身份需人工复核，完整契约见 outbound_usage.md。
