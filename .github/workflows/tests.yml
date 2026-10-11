@@ -1,0 +1,98 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unittest:
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      CI_EVENT_NAME: ${{ github.event_name }}
+      CI_BEFORE_SHA: ${{ github.event.before }}
+      CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      CI_HEAD_SHA: ${{ github.sha }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.14']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Verify CLI help
+        run: python qq_bot.py --help
+
+      - name: Check committed diff format
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly ZERO_SHA='0000000000000000000000000000000000000000'
+          readonly EMPTY_TREE='4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+
+          event_name="${CI_EVENT_NAME}"
+          before_sha="${CI_BEFORE_SHA:-}"
+          base_sha="${CI_BASE_SHA:-}"
+          head_sha="${CI_HEAD_SHA}"
+
+          run_diff_check() {
+            local label="$1"
+            local range="$2"
+            echo "git diff --check ${range} (${label})"
+            git diff --check "${range}"
+          }
+
+          if [[ "${event_name}" == "pull_request" ]]; then
+            if [[ -z "${base_sha}" ]]; then
+              echo "::error::Missing pull_request base SHA"
+              exit 1
+            fi
+            if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
+              echo "::error::pull_request base SHA is unavailable in fetched history: ${base_sha}"
+              exit 1
+            fi
+            if ! git cat-file -e "${head_sha}^{commit}" 2>/dev/null; then
+              echo "::error::Head SHA is unavailable in fetched history: ${head_sha}"
+              exit 1
+            fi
+            run_diff_check "pull_request" "${base_sha}...${head_sha}"
+            exit 0
+          fi
+
+          if [[ "${event_name}" == "push" ]]; then
+            if [[ -z "${before_sha}" || "${before_sha}" == "${ZERO_SHA}" ]]; then
+              run_diff_check "push-first-commit" "${EMPTY_TREE}..${head_sha}"
+              exit 0
+            fi
+            if git cat-file -e "${before_sha}^{commit}" 2>/dev/null && git merge-base --is-ancestor "${before_sha}" "${head_sha}"; then
+              run_diff_check "push" "${before_sha}..${head_sha}"
+              exit 0
+            fi
+            echo "::warning::github.event.before is missing from history or not an ancestor; fallback to EMPTY_TREE..HEAD"
+            run_diff_check "push-fallback" "${EMPTY_TREE}..${head_sha}"
+            exit 0
+          fi
+
+          echo "::error::Unsupported event for diff check: ${event_name}"
+          exit 1
