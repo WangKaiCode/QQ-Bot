@@ -73,3 +73,5 @@ TASK-019 在单独端口提供受认证 POST /events 和 GET /status，仅回环
 TASK-023 新增 CLI jobs-schedule 与模块 tick / serve，周期处理已结束的合成小时 / 日窗口；没有新增 HTTP 写接口。完整时间、作用域、输出与退出契约见 scheduler_usage.md。jobs.run 增加可选完整作用域，并拒绝提前执行未来结束窗口；无 schema 变化。
 
 TASK-024 新增 CLI provider-preview，先复用 outbound.prepare 再构造离线 DeepSeek 请求。模块 build_request 接受完整合成候选门禁，validate_response 检查本批引用、JSON 文档与用量，不读取密钥、不发送或持久化。接口限额与真实调用前置见 provider_usage.md；原 AI provider 契约的实际生成和作业接入仍未完成。
+
+TASK-025 新增 CLI deepseek-call，独立调用模块 / 预算账本；固定合成候选、请求 SHA 复核、Flash 与官方 endpoint，每次 1 元预留、月不高于 20 元，不重试。成功 sent=true 仅表明本次响应结构已验证，不授权转发或证明摘要事实质量。没有新增 HTTP 发送端点或周期 AI；具体错误、期限与预算局限见 deepseek_usage.md。

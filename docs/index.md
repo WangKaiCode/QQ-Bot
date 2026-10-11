@@ -36,6 +36,8 @@
 | [task023_validation.md](task023_validation.md) | 调度边界、CLI 与独立审查验证 | 仅实际结果 |
 | [provider_usage.md](provider_usage.md) | DeepSeek 离线接口、证据校验与调用前置 | 随 TASK-024 维护 |
 | [task024_validation.md](task024_validation.md) | 离线供应商接口与模拟响应验证 | 仅实际结果 |
+| [deepseek_usage.md](deepseek_usage.md) | 单次合成调用、本机密钥与预算预留 | 随 TASK-025 维护 |
+| [task025_validation.md](task025_validation.md) | 预算竞争、模拟传输及 CLI 验证 | 区分模拟与真实调用 |
 | [real_ingestion_proposal.md](real_ingestion_proposal.md) | 已批准受限试验、许可与本机前置核验 | 实际启动前继续核验 |
 | [onebot_usage.md](onebot_usage.md) | OneBot 离线适配、内存探针与合成回放 | 随 TASK-018 维护 |
 | [task018_validation.md](task018_validation.md) | 离线协议 / 时限 / 回放检查证据 | 仅实际结果 |

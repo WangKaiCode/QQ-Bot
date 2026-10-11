@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import sqlite3
 import sys
@@ -67,6 +68,18 @@ def main(argv=None):
     provider.add_argument("--until")
     provider.add_argument("--model", choices=("deepseek-flash", "deepseek-v4-pro"), default="deepseek-flash")
     provider.add_argument("--max-tokens", type=int, default=1024)
+    api_call = commands.add_parser("deepseek-call", help="单次合成 DeepSeek 调用；须匹配已检查请求的 SHA256")
+    api_call.add_argument("--account", required=True)
+    api_call.add_argument("--group", required=True)
+    api_call.add_argument("--rules")
+    api_call.add_argument("--topic", default="ai")
+    api_call.add_argument("--since")
+    api_call.add_argument("--until")
+    api_call.add_argument("--max-tokens", type=int, default=1024)
+    api_call.add_argument("--config", required=True, help="本机忽略配置；密钥不进入命令行")
+    api_call.add_argument("--ledger", default="data/deepseek.budget.db")
+    api_call.add_argument("--review-sha256", required=True)
+    api_call.add_argument("--timeout", type=int, default=30)
     retention = commands.add_parser("retention-preview", help="只读查看到期范围，不删除")
     retention.add_argument("--account", required=True)
     retention.add_argument("--group", required=True)
@@ -191,7 +204,7 @@ def main(argv=None):
                 result = jobs.list_jobs(jobs_db, args.account, args.group, args.limit)
             else:
                 result = jobs.feed(jobs_db, db, args.account, args.group, as_of, args.limit, args.offset)
-        elif args.command in ("analyze", "payload-preview", "provider-preview"):
+        elif args.command in ("analyze", "payload-preview", "provider-preview", "deepseek-call"):
             from .analysis import load_rules, preview
             rules = load_rules(args.rules) if args.rules else load_rules()
             topic = next((item for item in rules["topics"] if item["id"] == args.topic), None)
@@ -199,12 +212,33 @@ def main(argv=None):
                 raise ValueError("UNKNOWN_TOPIC")
             since = timestamp_ms(args.since) if args.since else None
             until = timestamp_ms(args.until) if args.until else None
-            if args.command in ("payload-preview", "provider-preview"):
+            if args.command in ("payload-preview", "provider-preview", "deepseek-call"):
                 from .outbound import prepare
                 result = prepare(db, args.account, args.group, topic, since, until)
-                if args.command == "provider-preview":
-                    from .providers import build_request
-                    result = build_request(result, args.model, args.max_tokens)
+                if args.command in ("provider-preview", "deepseek-call"):
+                    from .providers import build_request, _json, _loads
+                    result = build_request(result, getattr(args, "model", "deepseek-flash"), args.max_tokens)
+                    reviewed_hash = hashlib.sha256(_json(result["request"], "INVALID_PROVIDER_REQUEST_PREVIEW").encode("utf-8")).hexdigest()
+                    if args.command == "provider-preview":
+                        result["request_sha256"] = reviewed_hash
+                    else:
+                        if args.review_sha256 != reviewed_hash:
+                            raise ValueError("REQUEST_REVIEW_MISMATCH")
+                        ledger_path = Path(args.ledger).resolve()
+                        for protected in (Path(db_path), jobs_path, Path(args.config)):
+                            protected = protected.resolve()
+                            if ledger_path == protected or (ledger_path.exists() and protected.exists() and ledger_path.samefile(protected)):
+                                raise ValueError("LEDGER_PATH_COLLISION")
+                        with Path(args.config).open("rb") as stream:
+                            raw = stream.read(65537)
+                        if len(raw) > 65536:
+                            raise ValueError("CONFIG_LIMIT")
+                        config = _loads(raw.decode("utf-8"), "INVALID_DEEPSEEK_CONFIG")
+                        if not isinstance(config, dict) or set(config) != {"api_key", "monthly_budget_cny"}:
+                            raise ValueError("INVALID_DEEPSEEK_CONFIG")
+                        from .deepseek_client import call
+                        result = call(result, config["api_key"], ledger_path,
+                                      monthly_budget_cny=config["monthly_budget_cny"], timeout_seconds=args.timeout)
             else:
                 result = preview(db, args.account, args.group, topic, args.kind, since, until)
         else:
@@ -220,6 +254,16 @@ def main(argv=None):
         # Database/filesystem errors may contain paths or input; do not echo.
         code = exc.code if isinstance(exc, InvalidRecord) else (
             exc.args[0] if isinstance(exc, KeyError) else "INVALID_INPUT_OR_STORAGE_ERROR")
+        if args.command == "deepseek-call" and isinstance(exc, ValueError):
+            known = {"INVALID_PROVIDER_CANDIDATE", "INVALID_PROVIDER_REQUEST_PREVIEW", "INVALID_PROVIDER_MAX_TOKENS",
+                     "INVALID_API_KEY", "INVALID_MONTHLY_BUDGET", "INVALID_API_TIMEOUT", "PRICE_RECHECK_REQUIRED",
+                     "DUPLICATE_API_REQUEST", "MONTHLY_BUDGET_EXCEEDED", "BUDGET_DATABASE_ERROR",
+                     "UNRECOGNIZED_BUDGET_DATABASE", "TRIAL_FLASH_ONLY", "API_REQUEST_TOO_LARGE",
+                     "DEEPSEEK_HTTP_ERROR", "DEEPSEEK_NETWORK_ERROR", "DEEPSEEK_RESPONSE_INVALID",
+                     "DEEPSEEK_REQUEST_FAILED", "REQUEST_REVIEW_MISMATCH", "LEDGER_PATH_COLLISION",
+                     "CONFIG_LIMIT", "INVALID_DEEPSEEK_CONFIG"}
+            if str(exc) in known:
+                code = str(exc)
         print(json.dumps({"code": code}), file=sys.stderr)
         return 2
     finally:

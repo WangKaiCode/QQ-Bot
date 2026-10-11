@@ -25,3 +25,5 @@ build_request 仅接受完整 synthetic 的 outbound preview 契约，allowed_to
 2026-10-11 核验 [Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/)、[JSON 模式](https://api-docs.deepseek.com/guides/json_mode/)、[模型与定价](https://api-docs.deepseek.com/quick_start/pricing/) 和 [Open Platform 服务条款](https://cdn.deepseek.com/policies/en-US/deepseek-open-platform-terms-of-service.html)。当前使用托管 API 契约，未采用 SDK 或复制模型权重；模型开源许可不能代替服务条款。JSON 模式需要提示中包含 json 和输出例子，官方仍提示可能空响应或截断，因此本机再次校验。
 
 真实调用前：用户设定费用上限，密钥通过本机忽略配置提供；先明确合成样本调用方案和每次请求限额，再实施网络超时 / 重试 / 使用量与预算控制；真实正文还需人工复核候选去身份质量。当前仅供应商方向已定，不开启真实数据、周期外发或计费请求。
+
+后续更新：用户已明确月费用上限 20 元（DEC-032），TASK-025 新增独立受控合成单次入口，见 deepseek_usage.md；本模块 build_request / validate_response 仍保持离线，不读取密钥或发送。CLI provider-preview 额外输出 request_sha256 供单次调用绑定复核内容；原模块 envelope 不含该复核元数据。

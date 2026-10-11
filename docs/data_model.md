@@ -68,3 +68,5 @@ TASK-017：原文 schema 不变；独立作业 SQLite schema v1，以 jobs_metad
 TASK-018：独立 onebot.v11 内存身份 account / group / message_id / 随机会话 epoch；不写入任何数据库，不假设跨重启稳定。有限规范段与身份哈希在关闭 / 到期时清空；快照仅静态能力和计数。JSON 保留预算不代表 Python 堆大小或操作系统安全擦除，第三方缓存 / 日志未验证。真实三天持久来源能力尚未实现。
 
 TASK-023 / 024：不改原文 / 作业 schema。周期调度复用现有修订与租约身份；DeepSeek 候选请求与模拟响应仅瞬时构造 / 校验，无密钥、用量账本或真实摘要表。结构校验后的结果不自动写入 Mock 作业库；供应商摘要持久化与十天物理清理仍需独立设计验证。
+
+TASK-025：独立预算 SQLite schema v1，ledger_metadata magic=qq-radar.deepseek-budget.v1；api_calls 保存 UUID、北京时间月、请求 SHA256、固定预留 microCNY、reserved / succeeded / failed、静态错误、时间与纯用量 JSON，(month,request_hash) 唯一。预留先提交再发送，中断仍保留 reserved；不保存 API key、候选正文或完整响应。原文 / 作业库不迁移，成功摘要仅返回给调用者，不自动持久化。
