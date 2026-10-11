@@ -32,6 +32,8 @@
 | [jobs_usage.md](jobs_usage.md) | 可恢复 Mock 作业与引用信息流 | 随 TASK-017 维护 |
 | [task017_validation.md](task017_validation.md) | 作业恢复、CLI / HTTP 与浏览器验证 | 仅实际结果 |
 | [real_ingestion_proposal.md](real_ingestion_proposal.md) | 已批准受限试验、许可与本机前置核验 | 实际启动前继续核验 |
+| [onebot_usage.md](onebot_usage.md) | OneBot 离线适配、内存探针与合成回放 | 随 TASK-018 维护 |
+| [task018_validation.md](task018_validation.md) | 离线协议 / 时限 / 回放检查证据 | 仅实际结果 |
 
 项目根目录的 [AGENTS.md](../AGENTS.md) 是后续 Codex 的开发入口规则。已有 [README.md](../README.md) 保留第一阶段说明；最新开发状态以本入口和 status.md 为准。
 

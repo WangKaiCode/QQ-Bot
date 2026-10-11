@@ -17,6 +17,10 @@ def main(argv=None):
     parser.add_argument("--db")
     parser.add_argument("--jobs-db", help="独立作业库；默认原文库旁的 .jobs.db")
     commands = parser.add_subparsers(dest="command", required=True)
+    replay = commands.add_parser("onebot-replay", help="只读合成 OneBot JSONL 回放；不连接 QQ 或写数据库")
+    replay.add_argument("file")
+    replay.add_argument("--account", required=True)
+    replay.add_argument("--group", required=True)
     ingest = commands.add_parser("import", help="导入 synthetic.v1 JSONL")
     ingest.add_argument("file")
     ingest.add_argument("--allow", required=True, help="账号 / 群白名单 JSON 文件")
@@ -82,6 +86,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
     db = jobs_db = None
     try:
+        if args.command == "onebot-replay":
+            from .onebot_replay import replay
+            result = replay(args.file, args.account, args.group)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 1 if result["errors"] else 0
         db_path = args.db or ("data/source-demo.db" if args.command == "demo" else "data/radar.db")
         jobs_path = Path(args.jobs_db) if args.jobs_db else Path(db_path).with_suffix(".jobs.db")
         if args.command in ("demo", "serve"):

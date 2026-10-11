@@ -64,3 +64,5 @@ raw_json、转发文本、OCR、副本、导入文件、附件与索引都应纳
 TASK-015（2026-10-11）：无 schema 改变，只读扫描已有 expires_at；当前期限由 ingestion 按 occurred_at+3天写入，历史补录可能立即进入到期候选。预览同时计 message_segments 和 observations（重复观测也有原文副本），只报告不删除。托管媒体当前未下载，文件计数为 0 不表示媒体清理已实现。
 
 TASK-017：原文 schema 不变；独立作业 SQLite schema v1，以 jobs_metadata 标识 qq-radar.mock-jobs.v1。jobs 保存范围 / 规则 / 修订、状态 / 尝试次数 / 五分钟租约 / claim_token、固定窗口结束加十天期限及结果引用。引用结果不复制摘录；读取信息流时按来源哈希和期限动态补充。规则与命中词自身可能敏感。两库不允许同路径 / 同文件；不宣称跨库原子事务。完整状态和到期契约见 jobs_usage.md。
+
+TASK-018：独立 onebot.v11 内存身份 account / group / message_id / 随机会话 epoch；不写入任何数据库，不假设跨重启稳定。有限规范段与身份哈希在关闭 / 到期时清空；快照仅静态能力和计数。JSON 保留预算不代表 Python 堆大小或操作系统安全擦除，第三方缓存 / 日志未验证。真实三天持久来源能力尚未实现。
