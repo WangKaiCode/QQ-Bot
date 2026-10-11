@@ -44,4 +44,4 @@ QQ-Bot/
 
 第一阶段说明中的“没有应用 / 测试”是历史状态；TASK-004、013 至 017 已实现待验收。运行 `python qq_bot.py demo` 后，可体验信息流、原文阅读、导入记录、Mock 摘要、保留预览和候选载荷检查。信息流说明见 [jobs_usage.md](docs/jobs_usage.md)，当前状态见 [status.md](docs/status.md)。仍只使用合成数据，无真实 QQ / AI / 自动清理 / 部署。
 
-TASK-023 至 025：`jobs-schedule` 可前台周期处理合成小时 / 日窗口，`provider-preview` 可本机预览 DeepSeek 候选请求；[调度说明](docs/scheduler_usage.md)、[接口说明](docs/provider_usage.md)、[受控单次调用](docs/deepseek_usage.md)。当前完整 156 项本机 / 模拟测试通过；受控调用已实现但真实连通待本机密钥，GitHub 两系统 CI 仍待运行核验。
+TASK-023 至 025：`jobs-schedule` 可前台周期处理合成小时 / 日窗口，`provider-preview` 可本机预览 DeepSeek 候选请求；[调度说明](docs/scheduler_usage.md)、[接口说明](docs/provider_usage.md)、[受控单次调用](docs/deepseek_usage.md)。`deepseek-budget` 可只读查看预算预留。当前完整 166 项本机 / 模拟测试通过；受控调用已实现，本机密钥配置后单次合成尝试因 TLS EOF 失败，GitHub 两系统 CI 仍待运行核验。

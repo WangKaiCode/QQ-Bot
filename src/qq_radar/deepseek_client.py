@@ -43,7 +43,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def _clock(as_of):
+def _calendar(as_of):
     value = int(time.time() * 1000) if as_of is None else as_of
     if not isinstance(value, int) or isinstance(value, bool):
         raise ValueError("INVALID_API_AS_OF")
@@ -51,9 +51,54 @@ def _clock(as_of):
         now = (datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(milliseconds=value)).astimezone(SHANGHAI)
     except (OverflowError, ValueError):
         raise ValueError("INVALID_API_AS_OF") from None
+    return value, now
+
+
+def _clock(as_of):
+    value, now = _calendar(as_of)
     if now.date().isoformat() != PRICE_DATE:
         raise ValueError("PRICE_RECHECK_REQUIRED")
-    return value, now.strftime("%Y-%m")
+    return value, f"{now.year:04d}-{now.month:02d}"
+
+
+def budget_status(ledger_path, *, monthly_budget_cny=20, as_of=None):
+    """Read this application's monthly reservations without sending or writing.
+
+    A missing ledger represents zero local reservations. Reading does not
+    require a current price quotation, since it cannot authorize a new call.
+    """
+    if not isinstance(monthly_budget_cny, int) or isinstance(monthly_budget_cny, bool) or not 1 <= monthly_budget_cny <= 20:
+        raise ValueError("INVALID_MONTHLY_BUDGET")
+    _, now = _calendar(as_of)
+    month = f"{now.year:04d}-{now.month:02d}"
+    counts = {"reserved": 0, "succeeded": 0, "failed": 0}
+    report = {"month": month, "monthly_limit_cny": monthly_budget_cny, "monthly_reserved_cny": 0,
+              "remaining_cny": monthly_budget_cny, "counts": counts}
+    database = None
+    try:
+        path = Path(ledger_path).resolve()
+        if not path.exists():
+            return report
+        database = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=5)
+        # Keep the gate and aggregate in one read snapshot; no writes or schema
+        # initialization are performed by this read-only connection.
+        database.execute("BEGIN")
+        _ledger_gate(database)
+        total = 0
+        for status, count, reserved in database.execute("SELECT status,COUNT(*),SUM(reserved_micros) FROM api_calls "
+                                                        "WHERE month=? GROUP BY status", (month,)):
+            counts[status] = count
+            total += reserved
+        report["monthly_reserved_cny"] = total // RESERVATION_MICROS
+        report["remaining_cny"] = max(0, monthly_budget_cny - report["monthly_reserved_cny"])
+        return report
+    except (ValueError, TypeError, OSError, sqlite3.Error, RuntimeError) as exc:
+        if isinstance(exc, ValueError) and str(exc) == "UNRECOGNIZED_BUDGET_DATABASE":
+            raise ValueError("UNRECOGNIZED_BUDGET_DATABASE") from None
+        raise ValueError("BUDGET_DATABASE_ERROR") from None
+    finally:
+        if database is not None:
+            database.close()
 
 
 def _ledger_gate(database):

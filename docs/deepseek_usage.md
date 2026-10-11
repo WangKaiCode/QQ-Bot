@@ -32,3 +32,14 @@ python qq_bot.py --db data/source-demo.db deepseek-call --account demo-account -
 2026-10-11 [官方人民币报价](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)：Flash 高峰未命中输入 2 元 / 百万 token、输出 8 元 / 百万 token。按 byte 与 token 的保守近似，本轮限额估计低于 1 元；官方没有承诺这种近似是严格上界。该账本控制本客户端预留，不是供应商账户硬预算，不覆盖其他客户端消费或账本 / 时钟人为修改。初次试验报价仅当日有效，之后返回 PRICE_RECHECK_REQUIRED，由乙方重新核对价格再推进，不自动套用陈旧报价。
 
 标准库依据：[urllib](https://docs.python.org/3.14/library/urllib.request.html)、[TLS](https://docs.python.org/3.14/library/ssl.html)，许可沿用 DEC-016 的 PSF 记录，无新 SDK。接口 / JSON / 服务条款证据仍见 provider_usage.md。真实正文、自动批量调用、精确实际费用核算与摘要持久化不在本次已实现范围。
+
+## 只读预算查询（TASK-026）
+
+```powershell
+python qq_bot.py deepseek-budget
+python qq_bot.py deepseek-budget --monthly-budget 10 --as-of 2026-10-11T22:00:00+08:00
+```
+
+返回北京时间月份、显示上限、本月预留、剩余预留额度及 reserved / succeeded / failed 次数。--monthly-budget 只改变显示计算，不修改调用配置或账本；应与调用配置保持一致，剩余下界为零。不读取密钥、不打开来源库、不联网、不要求当日报价。账本不存在返回零且不创建路径；已有账本使用只读快照，损坏 / 陌生库拒绝。账本保护自身历史，不是供应商实际账单。
+
+2026-10-11 单次专属合成试验在 TLS 阶段失败，当前本月预留 1 元、剩余 19 元、failed=1；没有响应 / 用量 / 扣费确认。同一请求不重发、不重置账本。用户确认使用 Clash Verge TUN；保持网络开启，不因排查中断会话，不关闭 TLS 验证。

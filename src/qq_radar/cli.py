@@ -80,6 +80,10 @@ def main(argv=None):
     api_call.add_argument("--ledger", default="data/deepseek.budget.db")
     api_call.add_argument("--review-sha256", required=True)
     api_call.add_argument("--timeout", type=int, default=30)
+    budget = commands.add_parser("deepseek-budget", help="只读查看本机预算预留与调用状态；不读取密钥、不联网")
+    budget.add_argument("--ledger", default="data/deepseek.budget.db")
+    budget.add_argument("--monthly-budget", type=int, default=20, help="本次显示的月上限，1–20 元；不修改调用配置")
+    budget.add_argument("--as-of", help="带时区的查询时间；默认当前北京时间月份")
     retention = commands.add_parser("retention-preview", help="只读查看到期范围，不删除")
     retention.add_argument("--account", required=True)
     retention.add_argument("--group", required=True)
@@ -118,6 +122,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     db = jobs_db = None
     try:
+        if args.command == "deepseek-budget":
+            from .deepseek_client import budget_status
+            result = budget_status(args.ledger, monthly_budget_cny=args.monthly_budget,
+                                   as_of=timestamp_ms(args.as_of) if args.as_of else None)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
         if args.command == "probe-serve":
             from .probe_server import serve
             with Path(args.config).open("rb") as stream:
@@ -254,9 +264,9 @@ def main(argv=None):
         # Database/filesystem errors may contain paths or input; do not echo.
         code = exc.code if isinstance(exc, InvalidRecord) else (
             exc.args[0] if isinstance(exc, KeyError) else "INVALID_INPUT_OR_STORAGE_ERROR")
-        if args.command == "deepseek-call" and isinstance(exc, ValueError):
+        if args.command in ("deepseek-call", "deepseek-budget") and isinstance(exc, ValueError):
             known = {"INVALID_PROVIDER_CANDIDATE", "INVALID_PROVIDER_REQUEST_PREVIEW", "INVALID_PROVIDER_MAX_TOKENS",
-                     "INVALID_API_KEY", "INVALID_MONTHLY_BUDGET", "INVALID_API_TIMEOUT", "PRICE_RECHECK_REQUIRED",
+                     "INVALID_API_KEY", "INVALID_MONTHLY_BUDGET", "INVALID_API_TIMEOUT", "INVALID_API_AS_OF", "PRICE_RECHECK_REQUIRED",
                      "DUPLICATE_API_REQUEST", "MONTHLY_BUDGET_EXCEEDED", "BUDGET_DATABASE_ERROR",
                      "UNRECOGNIZED_BUDGET_DATABASE", "TRIAL_FLASH_ONLY", "API_REQUEST_TOO_LARGE",
                      "DEEPSEEK_HTTP_ERROR", "DEEPSEEK_NETWORK_ERROR", "DEEPSEEK_RESPONSE_INVALID",

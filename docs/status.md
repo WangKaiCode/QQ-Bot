@@ -1,6 +1,6 @@
 # 当前状态与 Codex 交接
 
-最后更新：2026-10-11。当前阶段：TASK-004 离线闭环、TASK-013 本机来源阅读与 TASK-014 离线筛选 / Mock 摘要预览、TASK-015 保留范围检查均已实现，待甲方验收。用户授权继续下一步并在重点决策时提醒（DEC-017）。Python / SQLite 查询已接到本机只读网页；未安装新依赖、接入 QQ / AI 或部署。当前项目已按用户明确要求同步 GitHub（DEC-027 / TASK-020）。
+最后更新：2026-10-11。当前阶段：TASK-004 离线闭环、TASK-013 本机来源阅读与 TASK-014 离线筛选 / Mock 摘要预览、TASK-015 保留范围检查均已实现，待甲方验收。用户授权继续下一步并在重点决策时提醒（DEC-017）。Python / SQLite 查询已接到本机只读网页；未安装新依赖、接入真实 QQ 或部署；合成 AI 单次连接尝试失败，详见下文。当前项目已按用户明确要求同步 GitHub（DEC-027 / TASK-020）。
 
 仓库：[WangKaiCode/QQ-Bot](https://github.com/WangKaiCode/QQ-Bot)，origin 使用 SSH，main 跟踪 origin/main。保留远端初始化与 Apache-2.0 LICENSE，首次项目推送为 de2cce1；未强制覆盖。完整历史扫描 194 个 blob，未发现受禁止的运行数据路径或常见凭据模式；data/ 中配置 / 数据库确认被忽略。此检查不是通用泄漏检测保证。本次未改应用代码，复用 TASK-019 的既有 100 项测试证据，没有重复运行应用测试。文档更新随本次同步提交；用 `git status -sb` 和远端 main SHA 核验最终一致性。
 
@@ -41,7 +41,7 @@ TASK-023 提交 e62bf6d 已正常推送 main。TASK-024 的 DeepSeek 离线请�
 
 PR #2 最新 head b79e23c 已独立复核，原检查缺陷与 action 发布依据已修正；Codex 同步 PR 描述到最终实现，草稿仍未合并。最新 tests run 38142169913 / run 4 仍 action_required / jobs=[]，需要在已登录 GitHub 页面批准后实际运行两系统。不可把本轮 142 项本机测试记为该 PR 云端通过。
 
-后续最新：用户已明确允许 DeepSeek 调用且月上限 20 元（DEC-032），替代上文预算待答。TASK-024 提交 a954495 已正常同步 main。TASK-025 受控单次合成入口与并发安全预算预留已实现，完整 156 项模拟 / 本机测试通过；独立 8 进程预算竞争和实际重定向处理链检查通过。说明 / 证据见 deepseek_usage.md / task025_validation.md。尚无真实连通 / 扣费记录：已创建被忽略的 data/deepseek.local.json 空密钥配置，等待用户在本机填好并回复，不在聊天收密钥。之后检查专属合成候选、哈希并执行一次，保留同一预算账本；若日期变化先复核价格。真实 QQ、真实正文外发、生产摘要 / 周期 AI、不可逆清理与部署仍未完成。
+后续最新：用户已明确允许 DeepSeek 调用且月上限 20 元（DEC-032），替代上文预算待答。TASK-024 提交 a954495 已正常同步 main。TASK-025 受控单次合成入口与并发安全预算预留已实现，完整 156 项模拟 / 本机测试通过；独立 8 进程预算竞争和实际重定向处理链检查通过。说明 / 证据见 deepseek_usage.md / task025_validation.md。用户已回复本机密钥“已配置”，审查专属虚构样本与 SHA 后单次尝试返回 DEEPSEEK_NETWORK_ERROR / TLS EOF；未获得响应、用量或扣费确认。账本 2026-10 保留失败预留 1 元，剩余 19 元，不退款或重发。无密钥诊断显示 DeepSeek 路径失败但其他 HTTPS 可达，28.0 地址是多域名共用映射，不能推定用户代理故障；等待网络恢复，若日期变化先复核价格。真实 QQ、真实正文外发、生产摘要 / 周期 AI、不可逆清理与部署仍未完成。
 
 2026-10-11 用户要求继续 Codex / Copilot 协作（DEC-028）。TASK-021 仓库指引、连接与权限核验完成，见 copilot_handoff.md。用户确认仍有包含额度且额外计费关闭后，TASK-022 已通过 GitHub 工具指派一次，Copilot 创建 [草稿 PR #2](https://github.com/WangKaiCode/QQ-Bot/pull/2)，关联 [Issue #1](https://github.com/WangKaiCode/QQ-Bot/issues/1)。尚未完成代码审查或两系统测试验收，不重复启动任务、不自行合并。下次读取 PR 最新变更和 checks，按专属文件及验收规格审查。此增量只有交接文档，不重复执行应用测试；既有 100 项证据不当作云端 / Linux 已通过。Codex 五小时额度瞬时读数已用 97%，按用户要求优先完成在手提交与交接。
 
@@ -65,3 +65,5 @@ PR #2 最新 head b79e23c 已独立复核，原检查缺陷与 action 发布依�
 4. DEC-011 已由 DEC-014 替代，DEC-015 / 017 授权当前增量；先检查 git status 和提交历史，再接续用户安排与已实现任务的后续工作。结束时同步文档与验证证据，重点决策按 DEC-017 提醒。
 
 离线命令与白名单见 offline_usage.md；网页启动与体验见 web_usage.md；筛选与摘要预览见 analysis_usage.md；暂无部署步骤。以 Git 提交历史核验每个增量交付版本。
+
+本轮最新：TASK-026 只读预算查询已实现待验收，全套 166 项通过、独立审查通过；`python qq_bot.py deepseek-budget` 不需密钥 / 来源库 / 网络，当前预留 1 元、剩余 19 元，见 task026_validation.md。用户确认使用 Clash Verge TUN，并担心关闭会断开会话：保持网络开启，只做无密钥路径检查，不关闭 TUN 或 TLS。
