@@ -43,6 +43,12 @@ def main(argv=None):
     analysis.add_argument("--kind", choices=("hourly", "daily"), default="hourly")
     analysis.add_argument("--since")
     analysis.add_argument("--until")
+    retention = commands.add_parser("retention-preview", help="只读查看到期范围，不删除")
+    retention.add_argument("--account", required=True)
+    retention.add_argument("--group", required=True)
+    retention.add_argument("--as-of", help="带时区的检查时间；默认当前时间")
+    retention.add_argument("--limit", type=int, default=20)
+    retention.add_argument("--offset", type=int, default=0)
     for name, help_text in (("demo", "准备合成样本并打开本机来源阅读服务"), ("serve", "只读浏览已有合成数据库")):
         web = commands.add_parser(name, help=help_text)
         web.add_argument("--port", type=int, default=8765)
@@ -80,6 +86,10 @@ def main(argv=None):
             result = detail(db, args.id)
         elif args.command == "context":
             result = context(db, args.id, args.radius)
+        elif args.command == "retention-preview":
+            from .retention import preview
+            result = preview(db, args.account, args.group, timestamp_ms(args.as_of) if args.as_of else None,
+                             args.limit, args.offset)
         elif args.command == "analyze":
             from .analysis import load_rules, preview
             rules = load_rules(args.rules) if args.rules else load_rules()

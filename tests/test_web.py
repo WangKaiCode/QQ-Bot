@@ -117,6 +117,24 @@ class WebTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SYNTHETIC_ONLY"):
             create_server(self.db_path, 0)
 
+    def test_retention_preview_is_metadata_only_and_readonly(self):
+        before = self.db_path.read_bytes()
+        route = "/api/v1/retention/preview?" + urlencode({"account": "demo-account", "group": "demo-tech", "as_of": "2099-01-01T00:00:00+08:00", "limit": 2})
+        first = self.get(route)
+        self.assertEqual(first["counts"]["total_messages"], 6)
+        self.assertEqual(first["counts"]["due_messages"], 6)
+        self.assertEqual(len(first["items"]), 2)
+        self.assertEqual(first["next_offset"], 2)
+        self.assertFalse(first["executed"])
+        self.assertNotIn("sender", json.dumps(first))
+        self.assertNotIn("raw_json", json.dumps(first))
+        second = self.get(route + "&offset=2")
+        self.assertTrue({item["id"] for item in first["items"]}.isdisjoint(item["id"] for item in second["items"]))
+        for query in ({"account": "a"}, {"account": "a", "group": "g", "as_of": "bad"},
+                      {"account": "a", "group": "g", "limit": 101}):
+            self.assertEqual(self.request("/api/v1/retention/preview?" + urlencode(query))[0], 400)
+        self.assertEqual(self.db_path.read_bytes(), before)
+
     def test_analysis_preview_and_invalid_rules(self):
         topics = self.get("/api/v1/topics")
         self.assertEqual([topic["id"] for topic in topics], ["ai", "network"])

@@ -57,3 +57,7 @@ GET /api/v1/topics 返回默认 rules.v1 主题列表。GET /api/v1/analysis/pre
 返回 coverage、digests、requested_range、mode=synthetic、persisted=false、scheduled=false。digests 含 window_start/end（北京时间分桶边界）、input_revision、topic、provider=mock.extractive.v1、points 与 evidence。CLI 时间范围可能只覆盖窗口的一部分，应以 requested_range 理解实际输入范围，不把分桶边界视作完整采集。证据含匿名 evidence_id、message_id、转发 path 与实际 terms；points 只能引用当前窗口证据并复制支持的原文 / 160 字符截断。
 
 最多读取 30,000 条逻辑消息，超限失败不截断；仅 synthetic.v1 / available 输入。此接口不实现上表持久 digests、subscriptions 或 AI provider 契约；Mock 输入只有匿名证据号与文字，正文身份仍未处理。运行、配置与统计解释见 analysis_usage.md。
+
+## TASK-015 保留范围 GET 子集
+
+GET /api/v1/retention/preview 要求 account、group；as_of 可传带时区 ISO 时间，默认当前时刻；limit 为 1–100，offset 非负。返回 policy、as_of、scope、counts、items 与 next_offset，readonly=true / executed=false。候选为 expires_at<=as_of 且 available 的消息，只有 ID / external_id / 到期时间 / 状态 / 段数 / 观测数，不含正文和发送者。全部统计在同一只读事务内，按时间和身份稳定分页；翻页应用保存首次 as_of。上表 POST 清理预览仍为路线提案。字段解释见 retention_usage.md。

@@ -83,6 +83,11 @@ def create_server(db_path, port=8765):
                     since, until = param("since"), param("until")
                     result = preview(db, param("account"), param("group"), topic, param("kind", "hourly"),
                                      timestamp_ms(since) if since else None, timestamp_ms(until) if until else None)
+                elif route == "/api/v1/retention/preview":
+                    from .retention import preview
+                    as_of = param("as_of")
+                    result = preview(db, param("account"), param("group"), timestamp_ms(as_of) if as_of else None,
+                                     int(param("limit", "20")), int(param("offset", "0")))
                 elif route == "/api/v1/conversations":
                     result = [dict(row) for row in db.execute(
                         "SELECT account_id, group_id, count(*) AS message_count FROM messages GROUP BY account_id,group_id ORDER BY account_id,group_id")]
