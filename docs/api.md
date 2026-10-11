@@ -67,3 +67,5 @@ TASK-016：GET /api/v1/outbound/preview 的范围 / 规则参数复用 analysis/
 TASK-017：GET /api/v1/feed 要求 account、group，支持 as_of、limit（1–100）、offset；返回 configured、items、next_offset，卡片包含动态 points 与 evidence 状态。GET /api/v1/jobs 要求 account、group，limit（1–100），返回当前范围作业元数据。缺少作业库正常返回未配置 / 空集合，不创建文件；所有网页端点仍仅 GET。写操作只由 CLI jobs-enqueue / jobs-run / demo 执行。字段、恢复与期限边界见 jobs_usage.md；这些端点不是未来真实采集的接收接口。
 
 TASK-018 仅模块与 CLI：normalize_event / Probe 的 onebot.probe.v1 契约及 onebot-replay 的显式合成包装见 onebot_usage.md。没有新增 HTTP 接收端点，现有网页 POST 仍 405。未转换到 synthetic.v1；异常和回放报告不回显事件正文。
+
+TASK-019 在单独端口提供受认证 POST /events 和 GET /status，仅回环地址且只有内存；不更改原文网页服务的只读接口。Bearer / Host / Origin / 长度与时限门禁、状态码见 probe_usage.md。没有详情、动作回复、数据库导入或资源获取接口；查询参数不作为凭据。

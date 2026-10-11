@@ -13,7 +13,7 @@ def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="QQ-Bot 合成数据离线工具（不接入 QQ / AI）")
+    parser = argparse.ArgumentParser(description="QQ-Bot 本机受限开发工具（不自动启动 QQ 或调用 AI）")
     parser.add_argument("--db")
     parser.add_argument("--jobs-db", help="独立作业库；默认原文库旁的 .jobs.db")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -21,6 +21,9 @@ def main(argv=None):
     replay.add_argument("file")
     replay.add_argument("--account", required=True)
     replay.add_argument("--group", required=True)
+    probe_server = commands.add_parser("probe-serve", help="受限本机内存探针；不启动 QQ / NapCat")
+    probe_server.add_argument("--config", required=True, help="仅本地保存的配置文件；不得提交真实凭据")
+    probe_server.add_argument("--port", type=int, default=8766)
     ingest = commands.add_parser("import", help="导入 synthetic.v1 JSONL")
     ingest.add_argument("file")
     ingest.add_argument("--allow", required=True, help="账号 / 群白名单 JSON 文件")
@@ -86,6 +89,20 @@ def main(argv=None):
     args = parser.parse_args(argv)
     db = jobs_db = None
     try:
+        if args.command == "probe-serve":
+            from .probe_server import serve
+            with Path(args.config).open("rb") as stream:
+                raw = stream.read(65537)
+            if len(raw) > 65536:
+                raise ValueError("CONFIG_LIMIT")
+            config = json.loads(raw)
+            keys = {"account", "allowed_groups", "token", "max_messages", "max_bytes", "max_retained_bytes", "duration_seconds"}
+            if not isinstance(config, dict) or set(config) - keys or not isinstance(config.get("allowed_groups"), list) or len(config["allowed_groups"]) != 1:
+                raise ValueError("INVALID_PROBE_CONFIG")
+            if not 1 <= args.port <= 65535:
+                raise ValueError("INVALID_PORT")
+            serve(config, args.port)
+            return 0
         if args.command == "onebot-replay":
             from .onebot_replay import replay
             result = replay(args.file, args.account, args.group)
@@ -168,7 +185,7 @@ def main(argv=None):
     except ImportAborted as exc:
         print(json.dumps({"code": "IMPORT_ABORTED", "batch_id": exc.batch_id}), file=sys.stderr)
         return 2
-    except (OSError, sqlite3.Error, ValueError, KeyError) as exc:
+    except (OSError, sqlite3.Error, ValueError, KeyError, RecursionError) as exc:
         # Database/filesystem errors may contain paths or input; do not echo.
         code = exc.code if isinstance(exc, InvalidRecord) else (
             exc.args[0] if isinstance(exc, KeyError) else "INVALID_INPUT_OR_STORAGE_ERROR")
