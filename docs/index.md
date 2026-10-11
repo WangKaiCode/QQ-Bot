@@ -7,6 +7,7 @@
 | [project_context.md](project_context.md) | 历史背景、证据来源和访问缺口 | 新证据到达时补充，不抹去历史缺口 |
 | [requirements.md](requirements.md) | 带编号的产品需求及验收草案 | 需求变化时更新；保留来源与确认状态 |
 | [workflow.md](workflow.md) | 甲乙方分工、开发流程、文档维护规则 | 协作方式变化时更新 |
+| [repository_protection.md](repository_protection.md) | 保护规则、授权与实际执行状态 | 区分准备和远端生效 |
 | [copilot_handoff.md](copilot_handoff.md) | Codex / Copilot 分工、CI 任务与连接证据 | 派发 / 返回 PR 时维护 |
 | [decisions.md](decisions.md) | 已确认决定、技术提案和待决策事项 | 决策产生或改变时更新 |
 | [development_plan.md](development_plan.md) | 第一阶段提出的开发顺序 | 作为初始计划保留；具体推进看任务表 |
