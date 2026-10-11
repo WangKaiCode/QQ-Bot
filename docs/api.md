@@ -71,3 +71,5 @@ TASK-018 仅模块与 CLI：normalize_event / Probe 的 onebot.probe.v1 契约�
 TASK-019 在单独端口提供受认证 POST /events 和 GET /status，仅回环地址且只有内存；不更改原文网页服务的只读接口。Bearer / Host / Origin / 长度与时限门禁、状态码见 probe_usage.md。没有详情、动作回复、数据库导入或资源获取接口；查询参数不作为凭据。
 
 TASK-023 新增 CLI jobs-schedule 与模块 tick / serve，周期处理已结束的合成小时 / 日窗口；没有新增 HTTP 写接口。完整时间、作用域、输出与退出契约见 scheduler_usage.md。jobs.run 增加可选完整作用域，并拒绝提前执行未来结束窗口；无 schema 变化。
+
+TASK-024 新增 CLI provider-preview，先复用 outbound.prepare 再构造离线 DeepSeek 请求。模块 build_request 接受完整合成候选门禁，validate_response 检查本批引用、JSON 文档与用量，不读取密钥、不发送或持久化。接口限额与真实调用前置见 provider_usage.md；原 AI provider 契约的实际生成和作业接入仍未完成。

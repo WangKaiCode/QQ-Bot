@@ -27,6 +27,7 @@
 | TASK-021 | Codex / Copilot 协作入口与连接核验；REQ-018 | 完成 | [协作与首个任务](copilot_handoff.md)、仓库指引；GitHub 工具返回账号与仓库权限，额度及额外计费状态由用户确认 |
 | TASK-022 | Copilot 首轮 Windows / Linux CI；REQ-015、018 | 进行中（Copilot 已接单） | [任务规格](copilot_handoff.md)、Issue #1 / 草稿 PR #2；仅 workflow / 测试说明，待实际两系统测试和 Codex 审查，不自行合并 |
 | TASK-023 | 本机合成小时 / 日周期调度；REQ-008、015、018 | 待验收（已实现） | [运行说明](scheduler_usage.md)、[验证](task023_validation.md)；20 新增测试，完整 120 项通过，独立审查修复作用域与未来窗口，不安装后台服务 |
+| TASK-024 | DeepSeek 离线请求 / 响应契约；REQ-008、013、014、018 | 待验收（离线子集已实现） | [说明](provider_usage.md)、[验证](task024_validation.md)；22 新增测试，完整 142 项通过；无密钥读取 / 网络 / 计费，实际调用预算待用户回复 |
 
 用户已通过 DEC-014 解除无代码阶段限制，并以 DEC-015 明确要求完成 TASK-004。离线增量已实现，TASK-012 本地基线已完成；结合 TASK-011 继续体验设计，无需让甲方承担技术规格编写。
 

@@ -26,6 +26,8 @@ GitHub 插件本机版本 0.1.12-5f7cd798dc99，Plugin Management 确认 install
 
 最新审查：2026-10-11 用户额度恢复并要求继续。独立审查确认原 head d736f980 仅两个专属文件，但 git diff --check 没有检查已提交范围，setup-python 原 SHA 缺正式发布依据。run 38125304124 为 action_required / jobs=[]。在原 PR [反馈一次](https://github.com/WangKaiCode/QQ-Bot/pull/2#issuecomment-6109357476) 后，Copilot [回复](https://github.com/WangKaiCode/QQ-Bot/pull/2#issuecomment-6109381109) 并提交 b79e23c232305474ed880edda159ccd906ca15da，补 fetch-depth=0、提交范围检查、setup-python 官方 v7.0.0 SHA 与 MIT 依据；文件 / 新 checks 待复核，PR 描述旧示例尚未同步。没有合并、启动第二任务或新增计费。内置浏览器未登录，API 工具无工作流批准端点。下文保留首次派发事实，历史额度 97% 不代表本轮余额。
 
+后续复核：b79e23c 原问题已解决，未发现新增阻塞代码缺陷；setup-python v7.0.0 经官方 tag / release 解析确认完整 SHA 与 MIT，checkout v4.2.2 固定发布保持。Codex 已更新 PR 描述为最终实现。最新 [run 38142169913](https://github.com/WangKaiCode/QQ-Bot/actions/runs/38142169913) 是 action_required / jobs=[]，仍无两系统通过证据。先批准该审查过的工作流并核验实际结果，再安排集成，不自行合并。
+
 用户检查连接后，本会话 GitHub 工具可用；实际返回账号 WangKaiCode、仓库 admin / push / triage 权限。建立 [Issue #1](https://github.com/WangKaiCode/QQ-Bot/issues/1)，起点 `28a575d8b0e336b7c7f57adf1b869b7616099baa`。用户随后明确确认“仍有包含额度，额外计费已关闭”。按 [官方 API 指南](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/use-cloud-agent-via-the-api) 的 `copilot-swe-agent[bot]` 指派一次；返回 assignees 含 Copilot，复读确认，并发现 Copilot 创建的 [草稿 PR #2](https://github.com/WangKaiCode/QQ-Bot/pull/2)，分支 `copilot/task-022-add-windows-linux-ci`，创建时间 2026-10-11 08:33:36 UTC。
 
 此证据只确认任务已启动，尚无最终代码审查或两系统 CI 通过证据。不要重复指派、启动第二任务或直接合并。下次从 PR #2 的最新提交、变更文件和 checks 开始；核对仅两个允许文件、完整 SHA 固定、最小权限与测试真实结果。若 GitHub 要求人工批准首次工作流运行，依据具体工作流审查后再处理。Codex 五小时额度读数已用 97%，当前先完成文档与 Git 收尾，应用代码未改，既有 100 项测试不重复执行。

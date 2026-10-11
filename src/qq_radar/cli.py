@@ -58,6 +58,15 @@ def main(argv=None):
     payload.add_argument("--topic", default="ai")
     payload.add_argument("--since")
     payload.add_argument("--until")
+    provider = commands.add_parser("provider-preview", help="构造 DeepSeek 离线候选请求；不读取密钥、不发送")
+    provider.add_argument("--account", required=True)
+    provider.add_argument("--group", required=True)
+    provider.add_argument("--rules")
+    provider.add_argument("--topic", default="ai")
+    provider.add_argument("--since")
+    provider.add_argument("--until")
+    provider.add_argument("--model", choices=("deepseek-flash", "deepseek-v4-pro"), default="deepseek-flash")
+    provider.add_argument("--max-tokens", type=int, default=1024)
     retention = commands.add_parser("retention-preview", help="只读查看到期范围，不删除")
     retention.add_argument("--account", required=True)
     retention.add_argument("--group", required=True)
@@ -182,7 +191,7 @@ def main(argv=None):
                 result = jobs.list_jobs(jobs_db, args.account, args.group, args.limit)
             else:
                 result = jobs.feed(jobs_db, db, args.account, args.group, as_of, args.limit, args.offset)
-        elif args.command in ("analyze", "payload-preview"):
+        elif args.command in ("analyze", "payload-preview", "provider-preview"):
             from .analysis import load_rules, preview
             rules = load_rules(args.rules) if args.rules else load_rules()
             topic = next((item for item in rules["topics"] if item["id"] == args.topic), None)
@@ -190,9 +199,12 @@ def main(argv=None):
                 raise ValueError("UNKNOWN_TOPIC")
             since = timestamp_ms(args.since) if args.since else None
             until = timestamp_ms(args.until) if args.until else None
-            if args.command == "payload-preview":
+            if args.command in ("payload-preview", "provider-preview"):
                 from .outbound import prepare
                 result = prepare(db, args.account, args.group, topic, since, until)
+                if args.command == "provider-preview":
+                    from .providers import build_request
+                    result = build_request(result, args.model, args.max_tokens)
             else:
                 result = preview(db, args.account, args.group, topic, args.kind, since, until)
         else:

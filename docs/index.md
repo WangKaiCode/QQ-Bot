@@ -34,6 +34,8 @@
 | [task017_validation.md](task017_validation.md) | 作业恢复、CLI / HTTP 与浏览器验证 | 仅实际结果 |
 | [scheduler_usage.md](scheduler_usage.md) | 合成小时 / 日窗口周期调度与恢复边界 | 随 TASK-023 维护 |
 | [task023_validation.md](task023_validation.md) | 调度边界、CLI 与独立审查验证 | 仅实际结果 |
+| [provider_usage.md](provider_usage.md) | DeepSeek 离线接口、证据校验与调用前置 | 随 TASK-024 维护 |
+| [task024_validation.md](task024_validation.md) | 离线供应商接口与模拟响应验证 | 仅实际结果 |
 | [real_ingestion_proposal.md](real_ingestion_proposal.md) | 已批准受限试验、许可与本机前置核验 | 实际启动前继续核验 |
 | [onebot_usage.md](onebot_usage.md) | OneBot 离线适配、内存探针与合成回放 | 随 TASK-018 维护 |
 | [task018_validation.md](task018_validation.md) | 离线协议 / 时限 / 回放检查证据 | 仅实际结果 |

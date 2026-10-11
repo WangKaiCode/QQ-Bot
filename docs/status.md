@@ -37,6 +37,10 @@
 
 TASK-023 本机 Mock 周期调度已实现待验收，最终全套 120 项通过；独立审查修复跨作用域执行与提前处理未来窗口。运行与边界见 scheduler_usage.md / task023_validation.md。前台进程退出后不继续调度，无真实 AI / 开机守护 / 自动清理。用户回复已有 DeepSeek API，优先准备离线接口契约；服务费用上限和实际调用仍待确定，密钥不发送到聊天或 Git。
 
+TASK-023 提交 e62bf6d 已正常推送 main。TASK-024 的 DeepSeek 离线请求 / 模拟响应契约已实现待验收，最新完整 142 项通过，见 provider_usage.md / task024_validation.md；没有实际 API 调用。下一真实 AI 阶段等待用户回复费用边界，然后实施受控合成调用与用量 / 超时控制，不能把已有 API 推定成任意花费或真实聊天发送许可。
+
+PR #2 最新 head b79e23c 已独立复核，原检查缺陷与 action 发布依据已修正；Codex 同步 PR 描述到最终实现，草稿仍未合并。最新 tests run 38142169913 / run 4 仍 action_required / jobs=[]，需要在已登录 GitHub 页面批准后实际运行两系统。不可把本轮 142 项本机测试记为该 PR 云端通过。
+
 2026-10-11 用户要求继续 Codex / Copilot 协作（DEC-028）。TASK-021 仓库指引、连接与权限核验完成，见 copilot_handoff.md。用户确认仍有包含额度且额外计费关闭后，TASK-022 已通过 GitHub 工具指派一次，Copilot 创建 [草稿 PR #2](https://github.com/WangKaiCode/QQ-Bot/pull/2)，关联 [Issue #1](https://github.com/WangKaiCode/QQ-Bot/issues/1)。尚未完成代码审查或两系统测试验收，不重复启动任务、不自行合并。下次读取 PR 最新变更和 checks，按专属文件及验收规格审查。此增量只有交接文档，不重复执行应用测试；既有 100 项证据不当作云端 / Linux 已通过。Codex 五小时额度瞬时读数已用 97%，按用户要求优先完成在手提交与交接。
 
 运行 `python qq_bot.py demo`，在本机浏览器体验信息流、来源阅读与摘要预览；当前演示仅合成内容。TASK-017 已实现独立作业库、幂等触发、租约恢复、引用信息流与到期状态；68 项自动化测试和实际浏览器验证通过，见 [说明](jobs_usage.md)、[验证](task017_validation.md)，待甲方验收。真实 AI 和后台定时器尚未实现。
