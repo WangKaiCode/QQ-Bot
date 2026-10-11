@@ -11,19 +11,29 @@
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span><div>信息雷达<small>QQ RADAR</small></div></div>
     <div class="workspace-label">工作空间</div>
-    <nav aria-label="页面导航"><button id="reading-tab" class="nav-item active" type="button" aria-current="page"><span aria-hidden="true">▤</span> 原文阅读</button><button id="imports-tab" class="nav-item" type="button"><span aria-hidden="true">↳</span> 导入记录</button></nav>
+    <nav aria-label="页面导航"><button id="reading-tab" class="nav-item active" type="button" aria-current="page"><span aria-hidden="true">▤</span> 原文阅读</button><button id="digest-tab" class="nav-item" type="button"><span aria-hidden="true">≋</span> 摘要预览</button><button id="imports-tab" class="nav-item" type="button"><span aria-hidden="true">↳</span> 导入记录</button></nav>
     <div class="sidebar-note"><span class="status-dot"></span> 本机合成演示<p>这里的内容均为合成数据。<br>尚未连接 QQ 或 AI。</p></div>
     <div class="sidebar-footer">先看内容，再回到来源。<br><span>阅读体验 · 第一个增量</span></div>
   </aside>
   <main>
     <header class="page-header"><div><div class="eyebrow">SOURCE READER</div><h1 id="page-title">原文阅读</h1><p id="page-description">保留消息的来处，也保留讨论的脉络。</p></div><span class="demo-badge">合成数据 · 只读</span></header>
     <div id="global-error" class="error-banner" role="alert" hidden></div>
-    <section id="reading-view" aria-labelledby="page-title">
       <form id="filters" class="filters">
         <label>账号<select id="account" aria-label="账号"></select></label>
         <label>群<select id="group" aria-label="群"></select></label>
         <label class="search-label">关键词<div class="search-control"><input id="keyword" type="search" maxlength="200" placeholder="搜索原文或转发内容"><button type="submit" class="primary">搜索</button></div></label>
       </form>
+    <section id="digest-view" hidden>
+      <form id="digest-settings" class="filters">
+        <label>关注主题<select id="topic" aria-label="关注主题"></select></label>
+        <label>归组方式<select id="digest-kind" aria-label="归组方式"><option value="hourly">每小时</option><option value="daily">每日</option></select></label>
+        <label class="search-label">关注关键词（英文逗号分隔）<div class="search-control"><input id="digest-keywords" aria-label="关注关键词" maxlength="820"><button type="submit" class="primary">生成预览</button></div></label>
+      </form>
+      <p class="boundary-note">本地规则 + Mock 摘录 · 设置仅用于本次预览，不保存。未调用 AI，未运行定时任务；图片与未知格式不参与文本筛选。</p>
+      <div id="digest-coverage" class="coverage" aria-live="polite"></div>
+      <div id="digest-list" aria-live="polite"></div>
+    </section>
+    <section id="reading-view" aria-labelledby="page-title">
       <div class="reader-grid">
         <section class="message-panel" aria-label="消息列表"><div class="panel-heading"><h2>群消息</h2><span id="message-count"></span></div><p class="list-hint">按消息时间排列 · 点击查看完整来源</p><div id="message-list" aria-live="polite"></div><div class="pagination"><button id="previous" type="button" class="secondary" disabled>上一页</button><span id="page-number">第 1 页</span><button id="next" type="button" class="secondary" disabled>下一页</button></div></section>
         <section class="detail-panel" aria-label="原文详情"><div class="panel-heading"><h2>来源与上下文</h2><span class="small-tag">应用内定位</span></div><div id="detail" aria-live="polite"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">↗</span><h3>从一条消息开始</h3><p>选择左侧消息，查看原文、转发层级和前后讨论。</p></div></div></section>

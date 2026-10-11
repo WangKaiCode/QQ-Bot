@@ -17,3 +17,5 @@ TASK-013 新增 test_web.py（5 项 HTTP 回归），总计 15 项测试；prepa
 - 约 30,000 条 / 天的回放和独立峰值负载。
 
 优先使用合成或脱敏样本。真实聊天、QQ 凭据与 API 密钥不作为提交到仓库的测试材料。测试的目标是验证业务行为与故障恢复，而非复刻实现细节。
+
+TASK-014 增量（2026-10-11）：test_analysis.py 覆盖规则、时间、隔离、证据拒绝、只读及输入版本；test_web.py 新增预览 HTTP 回归。实际最终数量与结果见 [task014_validation.md](../docs/task014_validation.md)。

@@ -1,0 +1,7 @@
+{
+  "schema_version": "rules.v1",
+  "topics": [
+    {"id": "ai", "name": "AI 与本地模型", "keywords": ["AI", "模型", "推理"]},
+    {"id": "network", "name": "网络与计算机", "keywords": ["网络", "计算机", "DNS", "路由"]}
+  ]
+}

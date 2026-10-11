@@ -35,6 +35,14 @@ def main(argv=None):
     around = commands.add_parser("context")
     around.add_argument("id")
     around.add_argument("--radius", type=int, default=10)
+    analysis = commands.add_parser("analyze", help="离线规则筛选与 Mock 摘录预览，不写库")
+    analysis.add_argument("--account", required=True)
+    analysis.add_argument("--group", required=True)
+    analysis.add_argument("--rules")
+    analysis.add_argument("--topic", default="ai")
+    analysis.add_argument("--kind", choices=("hourly", "daily"), default="hourly")
+    analysis.add_argument("--since")
+    analysis.add_argument("--until")
     for name, help_text in (("demo", "准备合成样本并打开本机来源阅读服务"), ("serve", "只读浏览已有合成数据库")):
         web = commands.add_parser(name, help=help_text)
         web.add_argument("--port", type=int, default=8765)
@@ -72,6 +80,15 @@ def main(argv=None):
             result = detail(db, args.id)
         elif args.command == "context":
             result = context(db, args.id, args.radius)
+        elif args.command == "analyze":
+            from .analysis import load_rules, preview
+            rules = load_rules(args.rules) if args.rules else load_rules()
+            topic = next((item for item in rules["topics"] if item["id"] == args.topic), None)
+            if topic is None:
+                raise ValueError("UNKNOWN_TOPIC")
+            result = preview(db, args.account, args.group, topic, args.kind,
+                             timestamp_ms(args.since) if args.since else None,
+                             timestamp_ms(args.until) if args.until else None)
         else:
             result = search(db, args.account, args.group, args.keyword,
                             timestamp_ms(args.since) if args.since else None,

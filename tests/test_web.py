@@ -117,6 +117,24 @@ class WebTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SYNTHETIC_ONLY"):
             create_server(self.db_path, 0)
 
+    def test_analysis_preview_and_invalid_rules(self):
+        topics = self.get("/api/v1/topics")
+        self.assertEqual([topic["id"] for topic in topics], ["ai", "network"])
+        before = self.db_path.read_bytes()
+        route = "/api/v1/analysis/preview?" + urlencode({"account": "demo-account", "group": "demo-tech", "topic": "ai"})
+        result = self.get(route)
+        self.assertEqual(result["coverage"]["matched_messages"], 3)
+        self.assertEqual(result["coverage"]["image_segments"], 2)
+        self.assertEqual(result["coverage"]["unsupported_segments"], 1)
+        self.assertFalse(result["persisted"])
+        evidence = result["digests"][0]["evidence"]
+        self.assertTrue(all(self.get("/api/v1/messages/" + item["message_id"])["account_id"] == "demo-account" for item in evidence))
+        custom = self.get(route + "&keywords=" + urlencode({"x": "网络"})[2:])
+        self.assertEqual(custom["coverage"]["matched_messages"], 1)
+        for path in (route + "&kind=invalid", route + "&keywords=", route + "&topic=network", "/api/v1/analysis/preview?topic=ai"):
+            self.assertEqual(self.request(path)[0], 400)
+        self.assertEqual(self.db_path.read_bytes(), before)
+
 
 if __name__ == "__main__":
     unittest.main()

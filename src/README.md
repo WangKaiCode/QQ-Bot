@@ -9,3 +9,5 @@ TASK-013 增量：demo.py 合成阅读样本、server.py 本机只读服务、we
 后续建议按职责拆分：采集 / 导入、标准化、存储、完整性记录、筛选 / 分析、任务调度、来源查询、Web 展示和保留策略。先验证离线样本闭环，再接真实 QQ 与 AI。
 
 具体模块目录和依赖在技术方案确认后创建，不在本阶段预装。
+
+TASK-014 增量（2026-10-11）：analysis.py / topics.json 提供只读规则 / 窗口 / Mock 摘录与证据校验，CLI analyze 与网页摘要预览复用；没有持久 worker 或真实 provider。运行见 [analysis_usage.md](../docs/analysis_usage.md)。

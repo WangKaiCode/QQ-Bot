@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = { conversations: [], offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
+const state = { conversations: [], topics: [], view: "reading", digestVersion: 0, offset: 0, next: null, selected: null, listVersion: 0, detailVersion: 0, importVersion: 0, keyword: "" };
 const labels = {"demo-account": "演示账号 A", "demo-second-account": "演示账号 B", "demo-tech": "技术交流 · 合成群", "demo-network": "网络讨论 · 合成群"};
 const errorLabels = {IDENTITY_CONFLICT: "同一消息身份的内容冲突，原文保留", INVALID_JSON: "JSON 格式无效", INVALID_FIELD: "字段缺失或格式错误", INVALID_TIMESTAMP: "时间无效", UNSUPPORTED_SCHEMA: "输入版本不支持", DEPTH_LIMIT: "转发层级超限", LINE_LIMIT: "单行大小超限", SEGMENT_LIMIT: "消息段数量超限"};
 function el(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; }
@@ -86,10 +86,67 @@ async function showImports() {
     }); card.append(button); return card; }); $("import-list").replaceChildren(...cards);
   } catch (error) { if (version === state.importVersion) { blank($("import-list"), "读取失败", "重新点击导入记录可重试。"); showError(error); } }
 }
-function setView(imports) { ++state.importVersion; $("reading-view").hidden = imports; $("imports-view").hidden = !imports; $("page-title").textContent = imports ? "导入记录" : "原文阅读"; $("page-description").textContent = imports ? "看清已处理的内容，也看清失败的原因。" : "保留消息的来处，也保留讨论的脉络。"; for (const [id, active] of [["reading-tab", !imports], ["imports-tab", imports]]) { $(id).classList.toggle("active", active); if (active) $(id).setAttribute("aria-current", "page"); else $(id).removeAttribute("aria-current"); } if (imports) showImports(); else clearError(); }
-$("reading-tab").addEventListener("click", () => setView(false)); $("imports-tab").addEventListener("click", () => setView(true));
-$("account").addEventListener("change", () => { setGroups(); state.offset = 0; loadMessages(); }); $("group").addEventListener("change", () => { state.offset = 0; loadMessages(); });
+function selectTopic() {
+  const topic = state.topics.find(item => item.id === $("topic").value);
+  $("digest-keywords").value = topic ? topic.keywords.join(",") : "";
+}
+async function loadDigests() {
+  const version = ++state.digestVersion;
+  clearError(); $("digest-coverage").textContent = "";
+  blank($("digest-list"), "正在生成本地预览…", "按当前关键词核对文本与来源。");
+  const current = scope();
+  if (!current.account || !current.group) { blank($("digest-list"), "暂无可分析的原文", "先导入合成消息。"); return; }
+  try {
+    const query = new URLSearchParams({...current, topic: $("topic").value, kind: $("digest-kind").value, keywords: $("digest-keywords").value});
+    const result = await api("/api/v1/analysis/preview?" + query);
+    if (version !== state.digestVersion || state.view !== "digest") return;
+    const coverage = result.coverage;
+    $("digest-coverage").textContent = `已导入 ${coverage.messages} 条 · 命中 ${coverage.matched_messages} 条 · 图片 ${coverage.image_segments} 段未处理 · 未知格式 ${coverage.unsupported_segments} 段 · 无文字 ${coverage.empty_text_messages} 条`;
+    if (!result.digests.length) { blank($("digest-list"), "没有命中的文字讨论", "可以修改关键词；图片和未知格式仍可在原文阅读里查看，这不代表没有相关信息。"); return; }
+    $("digest-list").replaceChildren(...result.digests.map(digest => {
+      const card = el("article", undefined, "digest-card");
+      const heading = el("div", undefined, "source-header");
+      heading.append(el("h2", digest.topic.name), el("span", "Mock · 文字摘录", "small-tag"));
+      card.append(heading, el("p", `${digest.window_start} 至 ${digest.window_end}（不含结束时间）`, "batch-id"));
+      card.append(el("p", `关注关键词：${digest.topic.keywords.join("、")} · ${digest.evidence.length} 个文本来源，最多展示 3 条摘录`, "boundary-note"));
+      for (const point of digest.points) {
+        const evidence = digest.evidence.find(item => item.evidence_id === point.evidence_id);
+        const block = el("div", undefined, "digest-point");
+        block.append(el("p", point.excerpt, "text-segment"), el("span", "命中：" + evidence.terms.join("、"), "source-chip"));
+        const button = el("button", "查看原文", "secondary"); button.type = "button";
+        button.addEventListener("click", () => { setView("reading"); loadDetail(evidence.message_id); });
+        block.append(button); card.append(block);
+      }
+      const sources = el("details", undefined, "original-json"); sources.append(el("summary", `查看全部 ${digest.evidence.length} 个来源与转发路径`));
+      for (const [index, evidence] of digest.evidence.entries()) {
+        const row = el("div", undefined, "evidence-row");
+        const button = el("button", `来源 ${index + 1} · 查看原文`, "secondary"); button.type = "button";
+        button.addEventListener("click", () => { setView("reading"); loadDetail(evidence.message_id); });
+        row.append(button, el("span", evidence.path + " · " + evidence.terms.join("、"), "batch-id")); sources.append(row);
+      }
+      card.append(sources); return card;
+    }));
+  } catch (error) { if (version === state.digestVersion && state.view === "digest") { blank($("digest-list"), "预览未生成", "检查关键词（1–20 个，每个最多 40 字符）或重试。失败时不会展示未经核对的摘录。"); showError(error); } }
+}
+function setView(view) {
+  ++state.importVersion; ++state.digestVersion; state.view = view;
+  for (const name of ["reading", "imports", "digest"]) {
+    $(name + "-view").hidden = name !== view;
+    const button = $(name + "-tab"); button.classList.toggle("active", name === view);
+    if (name === view) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
+  }
+  $("filters").hidden = view === "imports";
+  document.querySelector("#filters .search-label").hidden = view !== "reading";
+  $("page-title").textContent = {reading: "原文阅读", imports: "导入记录", digest: "摘要预览"}[view];
+  $("page-description").textContent = {reading: "保留消息的来处，也保留讨论的脉络。", imports: "看清已处理的内容，也看清失败的原因。", digest: "先聚合命中的讨论，再回到每一条来源。"}[view];
+  clearError(); if (view === "imports") showImports(); else if (view === "digest") loadDigests();
+}
+for (const name of ["reading", "imports", "digest"]) $(name + "-tab").addEventListener("click", () => setView(name));
+function scopeChanged() { state.offset = 0; loadMessages(); if (state.view === "digest") loadDigests(); }
+$("account").addEventListener("change", () => { setGroups(); scopeChanged(); }); $("group").addEventListener("change", scopeChanged);
+$("topic").addEventListener("change", () => { selectTopic(); loadDigests(); });
+$("digest-settings").addEventListener("submit", event => { event.preventDefault(); loadDigests(); });
 $("filters").addEventListener("submit", event => { event.preventDefault(); state.offset = 0; state.keyword = $("keyword").value; loadMessages(); });
 $("previous").addEventListener("click", () => { state.offset = Math.max(0, state.offset - 20); loadMessages(); }); $("next").addEventListener("click", () => { if (state.next !== null) { state.offset = state.next; loadMessages(); } });
-async function initialize() { try { state.conversations = await api("/api/v1/conversations"); const accounts = [...new Set(state.conversations.map(c => c.account_id))]; $("account").replaceChildren(...accounts.map(value => { const option = el("option", display(value)); option.value = value; return option; })); setGroups(); loadMessages(); } catch (error) { showError(error); blank($("message-list"), "无法连接本机服务", "启动服务后刷新页面。"); } }
+async function initialize() { try { [state.conversations, state.topics] = await Promise.all([api("/api/v1/conversations"), api("/api/v1/topics")]); const accounts = [...new Set(state.conversations.map(c => c.account_id))]; $("account").replaceChildren(...accounts.map(value => { const option = el("option", display(value)); option.value = value; return option; })); $("topic").replaceChildren(...state.topics.map(topic => { const option = el("option", topic.name); option.value = topic.id; return option; })); selectTopic(); setGroups(); loadMessages(); } catch (error) { showError(error); blank($("message-list"), "无法连接本机服务", "启动服务后刷新页面。"); } }
 initialize();

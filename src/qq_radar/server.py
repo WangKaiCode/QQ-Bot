@@ -70,6 +70,19 @@ def create_server(db_path, port=8765):
                 route = parsed.path
                 if route == "/api/v1/health":
                     result = {"mode": "synthetic", "readonly": True, "retention_active": False}
+                elif route == "/api/v1/topics":
+                    from .analysis import load_rules
+                    result = load_rules()["topics"]
+                elif route == "/api/v1/analysis/preview":
+                    from .analysis import load_rules, preview, validate_keywords
+                    topic = next((dict(item) for item in load_rules()["topics"] if item["id"] == param("topic", "ai")), None)
+                    if topic is None:
+                        raise ValueError("UNKNOWN_TOPIC")
+                    if "keywords" in params:
+                        topic["keywords"] = validate_keywords(param("keywords").split(","))
+                    since, until = param("since"), param("until")
+                    result = preview(db, param("account"), param("group"), topic, param("kind", "hourly"),
+                                     timestamp_ms(since) if since else None, timestamp_ms(until) if until else None)
                 elif route == "/api/v1/conversations":
                     result = [dict(row) for row in db.execute(
                         "SELECT account_id, group_id, count(*) AS message_count FROM messages GROUP BY account_id,group_id ORDER BY account_id,group_id")]

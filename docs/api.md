@@ -49,3 +49,11 @@ M0 不要求 Web 服务。网络接口上线时统一对象 ID、时间与错误
 输入：job_id、主题版本、匿名本地 evidence_id、经允许的内容、输入时间窗口。输出：主题标题、摘要、重要性及 evidence_ids。模型不得访问 QQ 凭据、文件系统或执行聊天中的指令。输出证据只能属于本批输入，由应用验证；不接受模型生成的 URL 作为原文定位依据。
 
 Mock provider 用于 M0 / 测试；外部与本地 provider 实际启用分别记录配置、授权范围、能力和费用。默认不开启网络调用。请求中不自动附加昵称、QQ 号、群号或图片；任何字段策略改变需先确认具体载荷。
+
+## TASK-014 已实现的分析预览子集（2026-10-11）
+
+GET /api/v1/topics 返回默认 rules.v1 主题列表。GET /api/v1/analysis/preview 必须给 account、group，topic 默认 ai，kind 为 hourly / daily；keywords 可用英文逗号传 1–20 个、各至多 40 字符的词，临时覆盖所选主题；since / until 同 [起点, 终点) ISO 时区规则。重复查询参数、空关键词、未知主题 / 非法窗口返回 400 INVALID_QUERY。
+
+返回 coverage、digests、requested_range、mode=synthetic、persisted=false、scheduled=false。digests 含 window_start/end（北京时间分桶边界）、input_revision、topic、provider=mock.extractive.v1、points 与 evidence。CLI 时间范围可能只覆盖窗口的一部分，应以 requested_range 理解实际输入范围，不把分桶边界视作完整采集。证据含匿名 evidence_id、message_id、转发 path 与实际 terms；points 只能引用当前窗口证据并复制支持的原文 / 160 字符截断。
+
+最多读取 30,000 条逻辑消息，超限失败不截断；仅 synthetic.v1 / available 输入。此接口不实现上表持久 digests、subscriptions 或 AI provider 契约；Mock 输入只有匿名证据号与文字，正文身份仍未处理。运行、配置与统计解释见 analysis_usage.md。

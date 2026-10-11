@@ -39,3 +39,7 @@ QQ-Bot/
 ## 后续开发入口
 
 最新文档与状态见 [文档索引](docs/index.md) 和 [Codex 交接](docs/status.md)；协作规则见根目录 [AGENTS.md](AGENTS.md)。2026-10-10 已完成官方组件核对并提交 [MVP 与技术提案](docs/mvp_proposal.md)，仍待甲方确认；此 README 的第一阶段记录保留。
+
+## 当前可运行增量（2026-10-11）
+
+第一阶段说明中的“没有应用 / 测试”是历史状态；TASK-004 / 013 / 014 已实现待验收。运行 `python qq_bot.py demo` 后，可体验原文阅读、导入记录和本地 Mock 摘要预览。筛选与原文回看说明见 [analysis_usage.md](docs/analysis_usage.md)，当前状态见 [status.md](docs/status.md)。仍只使用合成数据，无真实 QQ / AI / 自动清理 / 部署。
