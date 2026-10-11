@@ -19,3 +19,15 @@ TASK-013 新增 test_web.py（5 项 HTTP 回归），总计 15 项测试；prepa
 优先使用合成或脱敏样本。真实聊天、QQ 凭据与 API 密钥不作为提交到仓库的测试材料。测试的目标是验证业务行为与故障恢复，而非复刻实现细节。
 
 TASK-014 增量（2026-10-11）：test_analysis.py 覆盖规则、时间、隔离、证据拒绝、只读及输入版本；test_web.py 新增预览 HTTP 回归。实际最终数量与结果见 [task014_validation.md](../docs/task014_validation.md)。
+
+## GitHub Actions CI（TASK-022）
+
+仓库在 `.github/workflows/tests.yml` 提供跨平台标准库回归，触发条件为 `push` 与 `pull_request`：
+
+- 运行矩阵：`ubuntu-latest`、`windows-latest` + Python `3.14`
+- 执行命令：
+  - `python -m unittest discover -s tests -v`
+  - `python qq_bot.py --help`
+  - `git diff --check`
+
+该流程不安装额外依赖、不使用仓库 secrets、不使用 `pull_request_target`，且同分支新提交会取消进行中的同工作流运行。
