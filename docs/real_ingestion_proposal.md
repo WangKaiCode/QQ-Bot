@@ -85,3 +85,11 @@
 待澄清的具体问题是：官方发布包的下载与启动教程是否构成个人非商业、未经修改运行的明确许可，以及自研应用仅通过 OneBot 协议接收消息是否在允许范围内。协议边界与用户授权不能替代这些文本中的作者许可。此处记录的是文本适用不明，没有作法律裁定，也不自行联系作者或发送消息。
 
 在取得作者已有公开说明或用户已有许可依据前，先完成无组件执行的离线适配、配置校验及合成事件 probe。下一真实启动门槛为许可适用性明确、版本资产核验完成、用户本机填好独立账号 / 白名单群配置与登录操作。初期若采用不保存正文的受限 probe，仍需限制内存生命周期与日志，不写真实 SQLite；这只减少持久留存前置依赖，不免除账号范围和真实读取授权。持续采集 / 保存真实原文仍需保留执行方案到位。
+
+### 2026-10-11 额度恢复后的官方证据补核
+
+通过 GitHub connector 已补读 [v4.18.37 README](https://github.com/NapNeko/NapCatQQ/blob/v4.18.37/README.md)，blob 67c0bcf7519363ee00b49d364f3b5ac20ec78692；此前读取失败的缺口已补齐。固定 tag commit 为 ff9a829e29038eeec3e23b062ec90c838fc9efa3，[LICENSE](https://github.com/NapNeko/NapCatQQ/blob/ff9a829e29038eeec3e23b062ec90c838fc9efa3/LICENSE) blob a79f4f97db1bab5ada62d8844aaa33291ef2e604，仍为 Limited Redistribution License。README 确有首次下载 / 使用指导及混合许可 / 消息推送说明；对本项目 OneBot 接收器的许可适用未因此明确。
+
+[官方 Issue #2096 的作者回复](https://github.com/NapNeko/NapCatQQ/issues/2096#issuecomment-6050192807)：Echo 免费非商业聊天分析工具于 2026-10-07 咨询修改 runtime、加载插件及随 Windows Release 分发，主作者 MliKiowa 于 2026-10-08 回复“没有问题”。这属于对 Echo 具体方案的答复，不自动推定 QQ-Bot 或全部第三方项目已经获许可；本轮没有向作者发送消息。
+
+[固定版本 release](https://github.com/NapNeko/NapCatQQ/releases/tag/v4.18.37) 提供 Windows QQ 9.9.33-52230 的 35 秒无登录启动成功说明及 Shell ZIP SHA256 db39b28192714f8f54b3dcdccb84f9898be409faebb05da6627995b998517859，同时明确未进行登录测试。未下载 / 安装 / 启动组件，此 hash 仅是上游给出的资产证据，不是本机下载核验结果。许可前置与登录 / 真实消息兼容仍未解除，不自动换路线。
