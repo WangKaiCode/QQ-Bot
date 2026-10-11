@@ -1,6 +1,6 @@
 # 离线可恢复 Mock 作业与信息流
 
-2026-10-11，TASK-017，关联 REQ-008 / 009 / 012。仅用于 synthetic.v1。没有真实 AI、通知发送、后台定时器或自动删除。实现位于 `src/qq_radar/jobs.py`；CLI 与页面已集成。
+2026-10-11，TASK-017，关联 REQ-008 / 009 / 012。仅用于 synthetic.v1。没有真实 AI、通知发送或自动删除。实现位于 `src/qq_radar/jobs.py`；CLI 与页面已集成。TASK-023 新增独立前台周期调度，见 [scheduler_usage.md](scheduler_usage.md)，没有安装后台服务。
 
 ## 使用入口
 
@@ -13,7 +13,7 @@
 作业库使用 `jobs.connect(path, readonly=False)`，有独立 `jobs_metadata` 标识与 schema v1。只接受空库或本模块数据库，拒绝原文库、陌生库、版本不符及两个连接指向同一文件。原文连接使用 `storage.connect(source_path, readonly=True)`。信息流查询及作业记录浏览可用只读作业连接。
 
 - `enqueue(jobs, source, account, group, topic, kind, since, until, as_of=None)`：按完整北京时间窗口生成 pending 作业；返回 inserted、matched、empty_windows、job_ids。UTC 毫秒 since / until 必须对齐窗口，左闭右开，until 不得超过 as_of。单次最多 72 个小时窗或 3 个日窗。无匹配文字的窗口不创建作业。
-- `run(jobs, source, as_of=None)`：每次处理候选快照最多 200 个作业，返回 succeeded、failed、superseded、expired 计数；不会持续运行。运行时发现新输入修订会创建新 pending 作业，下一次 run 再处理。
+- `run(jobs, source, as_of=None, *, account=None, group=None, topic=None)`：每次处理候选快照最多 200 个已结束窗口作业，返回 succeeded、failed、superseded、expired 计数；不会持续运行。可同时指定账号 / 群 / 主题，仅处理该规则族；不完整作用域拒绝。省略时保持 CLI jobs-run 的全库行为。运行时发现新输入修订会创建新 pending 作业，下一次 run 再处理。
 - `feed(jobs, source, account, group, as_of=None, limit=20, offset=0)`：返回 items 和 next_offset；每个账号 / 群 / 窗口种类 / 窗口 / 主题规则族仅展示最新成功修订。新修订尚未成功时，旧卡片标记 update_pending；即使尚未 enqueue，迟到输入改变当前修订也会标记 input_changed，查询不会自动建立任务。主题规则改变属于不同规则族。
 - `list_jobs(jobs, account, group, limit=50)`：查看任务状态、修订、尝试次数及稳定错误码，不返回来源正文。
 

@@ -75,6 +75,13 @@ def main(argv=None):
     queued.add_argument("--as-of")
     runner = commands.add_parser("jobs-run", help="一次性运行或恢复本地 Mock 作业")
     runner.add_argument("--as-of")
+    scheduler = commands.add_parser("jobs-schedule", help="周期处理合成数据的完整小时 / 日窗口；Ctrl+C 停止")
+    scheduler.add_argument("--account", required=True)
+    scheduler.add_argument("--group", required=True)
+    scheduler.add_argument("--rules")
+    scheduler.add_argument("--topic", default="ai")
+    scheduler.add_argument("--interval", type=int, default=60, help="完成一轮后的等待秒数，1–3600")
+    scheduler.add_argument("--max-ticks", type=int, help="可选：运行 1–10000 轮后退出")
     for name in ("jobs-list", "feed"):
         listing = commands.add_parser(name)
         listing.add_argument("--account", required=True)
@@ -110,6 +117,18 @@ def main(argv=None):
             return 1 if result["errors"] else 0
         db_path = args.db or ("data/source-demo.db" if args.command == "demo" else "data/radar.db")
         jobs_path = Path(args.jobs_db) if args.jobs_db else Path(db_path).with_suffix(".jobs.db")
+        if args.command == "jobs-schedule":
+            from .analysis import load_rules
+            from .scheduler import serve
+            rules = load_rules(args.rules) if args.rules else load_rules()
+            topic = next((item for item in rules["topics"] if item["id"] == args.topic), None)
+            if topic is None:
+                raise ValueError("UNKNOWN_TOPIC")
+            result = serve(db_path, jobs_path, args.account, args.group, topic,
+                           args.interval, args.max_ticks,
+                           reporter=lambda report: print(json.dumps(report, ensure_ascii=False), flush=True))
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
         if args.command in ("demo", "serve"):
             from .demo import prepare_demo, prepare_jobs
             from .server import serve

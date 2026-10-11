@@ -69,3 +69,5 @@ TASK-017：GET /api/v1/feed 要求 account、group，支持 as_of、limit（1–
 TASK-018 仅模块与 CLI：normalize_event / Probe 的 onebot.probe.v1 契约及 onebot-replay 的显式合成包装见 onebot_usage.md。没有新增 HTTP 接收端点，现有网页 POST 仍 405。未转换到 synthetic.v1；异常和回放报告不回显事件正文。
 
 TASK-019 在单独端口提供受认证 POST /events 和 GET /status，仅回环地址且只有内存；不更改原文网页服务的只读接口。Bearer / Host / Origin / 长度与时限门禁、状态码见 probe_usage.md。没有详情、动作回复、数据库导入或资源获取接口；查询参数不作为凭据。
+
+TASK-023 新增 CLI jobs-schedule 与模块 tick / serve，周期处理已结束的合成小时 / 日窗口；没有新增 HTTP 写接口。完整时间、作用域、输出与退出契约见 scheduler_usage.md。jobs.run 增加可选完整作用域，并拒绝提前执行未来结束窗口；无 schema 变化。

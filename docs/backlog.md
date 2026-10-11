@@ -26,6 +26,7 @@
 | TASK-020 | 首次 GitHub 同步与授权记录；REQ-018 | 完成 | DEC-027；保留远端 LICENSE / 初始化、历史路径与凭据模式检查、SSH 正常推送 main；应用未部署 |
 | TASK-021 | Codex / Copilot 协作入口与连接核验；REQ-018 | 完成 | [协作与首个任务](copilot_handoff.md)、仓库指引；GitHub 工具返回账号与仓库权限，额度及额外计费状态由用户确认 |
 | TASK-022 | Copilot 首轮 Windows / Linux CI；REQ-015、018 | 进行中（Copilot 已接单） | [任务规格](copilot_handoff.md)、Issue #1 / 草稿 PR #2；仅 workflow / 测试说明，待实际两系统测试和 Codex 审查，不自行合并 |
+| TASK-023 | 本机合成小时 / 日周期调度；REQ-008、015、018 | 待验收（已实现） | [运行说明](scheduler_usage.md)、[验证](task023_validation.md)；20 新增测试，完整 120 项通过，独立审查修复作用域与未来窗口，不安装后台服务 |
 
 用户已通过 DEC-014 解除无代码阶段限制，并以 DEC-015 明确要求完成 TASK-004。离线增量已实现，TASK-012 本地基线已完成；结合 TASK-011 继续体验设计，无需让甲方承担技术规格编写。
 

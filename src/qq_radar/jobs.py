@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-from .analysis import iso, preview, window_start
+from .analysis import iso, preview, validate_keywords, window_start
 from .domain import encode
 
 MAGIC = "qq-radar.mock-jobs.v1"
@@ -123,13 +123,23 @@ def enqueue(jobs, source, account, group, topic, kind, since, until, as_of=None)
     return {"mode": "synthetic", "scheduled": False, "inserted": inserted, "matched": matched, "empty_windows": empty, "job_ids": ids}
 
 
-def run(jobs, source, as_of=None):
+def run(jobs, source, as_of=None, *, account=None, group=None, topic=None):
     _separate(jobs, source)
     clock = _now(as_of)
     counts = {"succeeded": 0, "failed": 0, "superseded": 0, "expired": 0}
     # Bound one invocation; concurrently enqueued work is handled next time.
-    candidates = jobs.execute("SELECT id FROM analysis_jobs WHERE status IN ('pending','failed') "
-                              "OR (status='running' AND lease_until<=?) ORDER BY created_at,id LIMIT 200", (clock,)).fetchall()
+    conditions = ["window_end<=?", "(status IN ('pending','failed') OR (status='running' AND lease_until<=?))"]
+    parameters = [clock, clock]
+    if any(value is not None for value in (account, group, topic)):
+        if (not isinstance(account, str) or not account or not isinstance(group, str) or not group
+                or not isinstance(topic, dict) or not isinstance(topic.get("name"), str) or not topic["name"].strip()):
+            raise ValueError("INVALID_JOB_SCOPE")
+        normalized = {"id": topic.get("id", "custom"), "name": topic["name"],
+                      "keywords": validate_keywords(topic.get("keywords"))}
+        conditions.extend(["account_id=?", "group_id=?", "topic_json=?"])
+        parameters.extend([account, group, encode(normalized)])
+    candidates = jobs.execute("SELECT id FROM analysis_jobs WHERE " + " AND ".join(conditions) +
+                              " ORDER BY created_at,id LIMIT 200", parameters).fetchall()
     for candidate in candidates:
         token = str(uuid4())
         with jobs:
